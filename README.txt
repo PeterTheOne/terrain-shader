@@ -1,4 +1,4 @@
-terrain-shader
+﻿terrain-shader
 
 terrain-shader is a project for our shader course at the
 University of Applied Sciences Upper Austrian, Campus Hagenberg. 
@@ -43,3 +43,5 @@ You can also put the libary files in the project folder if you want.
 and the other files in an /lib and /include/GL folder.
 You also need to adjust the project settings and 
 when commiting make sure to exclude these files.
+
+huhu ois foisch
