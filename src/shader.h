@@ -2,7 +2,7 @@
 #define __SHADER_H
 
 #include <string>
-#include <stdlib.h>
+#include <cstdlib>
 
 #include <GL/glew.h>
 #include <GL/gl.h>
