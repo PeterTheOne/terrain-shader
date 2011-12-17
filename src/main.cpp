@@ -1,4 +1,5 @@
-#include <stdlib.h>
+#include <cstdlib>
+#include <cstdio>
 
 #include <GL/glew.h>
 #include <GL/gl.h>

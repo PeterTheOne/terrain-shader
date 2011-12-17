@@ -1,8 +1,9 @@
 #include "shader.h"
 
-#include <string.h>
+#include <string>
 #include <iostream>
-#include <stdlib.h>
+#include <cstdlib>
+#include <cstdio>
 
 using namespace std;
 
