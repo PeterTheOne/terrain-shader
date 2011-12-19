@@ -32,12 +32,22 @@ void display() {
 	glLoadIdentity();
 	gluLookAt(0.0, 0.0, 5.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
 
-	shader.bind();
 	glRotatef(xrot, 1.0, 0.0, 0.0);
 	glRotatef(yrot, 0.0, 1.0, 0.0);
-	glColor3f(1.0, 0.0, 0.0);
-	glutSolidCube(2);
-	glutSolidSphere(1.2, 16, 16);
+
+	// display place surface
+	shader.bind();
+	glColor4f(1.0, 1.0, 0.0, 1.0);
+	glBegin(GL_TRIANGLE_STRIP);
+	for (int x = 0; x < 100; x++) {
+		for (int z = 0; z < 100; z++) {
+			glVertex3f(x, 0, z);
+			glVertex3f(x, 0, z + 1);
+			glVertex3f(x + 1, 0, z);
+			glVertex3f(x + 1, 0, z + 1);
+		}
+	}
+	glEnd();
 	shader.unbind();
 
 	glutSwapBuffers();

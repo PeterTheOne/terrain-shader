@@ -3,4 +3,7 @@
 void main() {			
 	// Set the position of the current vertex 
 	gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
+
+	// gl_Color from openGL application
+	gl_FrontColor = gl_Color;
 }
