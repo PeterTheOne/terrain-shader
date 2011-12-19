@@ -9,7 +9,13 @@
 
 Shader shader;
 
-GLfloat angle = 0.0;
+bool mouseDown = false;
+
+float xrot = 0.0f;
+float yrot = 0.0f;
+
+float xdiff = 0.0f;
+float ydiff = 0.0f;
 
 void init() {
 	glClearColor(0.0, 0.0, 0.0, 1.0);
@@ -27,16 +33,14 @@ void display() {
 	gluLookAt(0.0, 0.0, 5.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
 
 	shader.bind();
-	glRotatef(angle, 1.0, 0.0, 0.0);
-	glRotatef(angle, 0.0, 1.0, 0.0);
-	glRotatef(angle, 0.0, 0.0, 1.0);
+	glRotatef(xrot, 1.0, 0.0, 0.0);
+	glRotatef(yrot, 0.0, 1.0, 0.0);
 	glColor3f(1.0, 0.0, 0.0);
 	glutSolidCube(2);
 	glutSolidSphere(1.2, 16, 16);
 	shader.unbind();
 
 	glutSwapBuffers();
-	angle++;
 }
 
 void reshape(int w, int h) {
@@ -62,6 +66,24 @@ void idle() {
 	glutPostRedisplay();
 }
 
+void mouse(int button, int state, int x, int y){
+	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)	{
+		mouseDown = true;
+		xdiff = x - yrot;
+		ydiff = -y + xrot;
+	} else {
+		mouseDown = false;
+	}
+}
+
+void mouseMotion(int x, int y){
+	if (mouseDown){
+		yrot = x - xdiff;
+		xrot = y + ydiff;
+		glutPostRedisplay();
+	}
+}
+
 int main(int argc, char** argv) {
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
@@ -72,6 +94,8 @@ int main(int argc, char** argv) {
 	glutDisplayFunc(display);
 	glutReshapeFunc(reshape);
 	glutKeyboardFunc(keyboard);
+	glutMouseFunc(mouse);
+	glutMotionFunc(mouseMotion);
 	glutIdleFunc(idle);
 
 	GLenum err = glewInit();
