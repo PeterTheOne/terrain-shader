@@ -29,6 +29,31 @@ static char* textFileRead(const char *fileName) {
 	return text;
 }
 
+static void validateShader(GLuint shader, const char* file = 0) {
+	const unsigned int BUFFER_SIZE = 512;
+	char buffer[BUFFER_SIZE];
+	memset(buffer, 0, BUFFER_SIZE);
+	GLsizei length = 0;
+
+	glGetShaderInfoLog(shader, BUFFER_SIZE, &length, buffer);
+	if (length > 0) {
+		cerr << "Shader " << shader << " (" << (file ? file : "") << 
+			") compile error: " << endl << buffer << endl;
+	}
+}
+
+static void validateProgram(GLuint program) {
+	const unsigned int BUFFER_SIZE = 512;
+	char buffer[BUFFER_SIZE];
+	memset(buffer, 0, BUFFER_SIZE);
+	GLsizei length = 0;
+
+	glGetShaderInfoLog(program, BUFFER_SIZE, &length, buffer);
+	if (length > 0) {
+		cerr << "Program " << program << "link error: " << buffer << endl;
+	}
+}
+
 Shader::Shader() {
 	//left empty
 }
@@ -53,12 +78,15 @@ void Shader::init(const char *vsFile, const char *fsFile) {
 	glShaderSource(shader_fp, 1, &fsText, 0);
 
 	glCompileShader(shader_vp);
+	validateShader(shader_vp, vsFile);
 	glCompileShader(shader_fp);
+	validateShader(shader_fp, fsFile);
 
 	shader_id = glCreateProgram();
 	glAttachShader(shader_id, shader_fp);
 	glAttachShader(shader_id, shader_vp);
 	glLinkProgram(shader_id);
+	validateProgram(shader_id);
 }
 
 Shader::~Shader() {
