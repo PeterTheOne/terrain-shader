@@ -30,7 +30,7 @@ static char* textFileRead(const char *fileName) {
 }
 
 Shader::Shader() {
-
+	//left empty
 }
 
 Shader::Shader(const char *vsFile, const char *fsFile) {

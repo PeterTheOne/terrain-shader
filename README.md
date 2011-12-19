@@ -3,7 +3,8 @@ terrain-shader
 
 terrain-shader is a project for our shader course at the
 University of Applied Sciences Upper Austrian, Campus Hagenberg. 
-We want to create a shader for changing world.
+We want to create a shader for changing world. It is based on the 
+tutorials of http://www.swiftless.com/
 
 Created by:
 -----------
