@@ -1,4 +1,4 @@
-﻿terrain-shader
+terrain-shader
 ==============
 
 terrain-shader is a project for our shader course at the
