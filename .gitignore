@@ -1,6 +1,10 @@
-/Debug
-/Release
+[Dd]ebug/
+[Rr]elease/
+ipch/
+obj/
 *.suo
-*.opensdf
 *.user
+*.ncb
+*.sbr
+*.opensdf
 *.sdf
