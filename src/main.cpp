@@ -1,128 +1,83 @@
-#include <cstdlib>
-#include <cstdio>
-
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 #include <GL/glew.h>
-#include <GL/gl.h>
-#include <GL/glut.h>
+#include <GL/freeglut.h>
+#define WINDOW_TITLE_PREFIX "Chapter 1"
 
-#include "shader.h"
+int CurrentWidth = 800,
+	CurrentHeight = 600,
+	WindowHandle = 0;
 
-Shader shader;
+void Initialize(int, char*[]);
+void InitWindow(int, char*[]);
+void ResizeFunction(int, int);
+void RenderFunction(void);
 
-bool mouseDown = false;
+int main(int argc, char* argv[])
+{
+	Initialize(argc, argv);
 
-float xrot = 0.0f;
-float yrot = 0.0f;
-
-float xdiff = 0.0f;
-float ydiff = 0.0f;
-
-void init() {
-	glClearColor(0.0, 0.0, 0.0, 1.0);
-
-	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_LIGHTING);
-	glEnable(GL_LIGHT0);
-
-	shader.init("src//shader.vert", "src//shader.frag");
-}
-
-void display() {
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glLoadIdentity();
-	gluLookAt(0.0, 0.0, 5.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
-
-	glRotatef(xrot, 1.0, 0.0, 0.0);
-	glRotatef(yrot, 0.0, 1.0, 0.0);
-
-	// display place surface
-	shader.bind();
-	glColor4f(1.0, 1.0, 0.0, 1.0);
-	glBegin(GL_TRIANGLE_STRIP);
-	for (int x = 0; x < 100; x++) {
-		for (int z = 0; z < 100; z++) {
-			glVertex3f(x, 0, z);
-			glVertex3f(x, 0, z + 1);
-			glVertex3f(x + 1, 0, z);
-			glVertex3f(x + 1, 0, z + 1);
-		}
-	}
-	glEnd();
-	shader.unbind();
-
-	glutSwapBuffers();
-}
-
-void reshape(int w, int h) {
-	glViewport(0, 0, (GLsizei) w, (GLsizei) h);
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	gluPerspective(60, (GLfloat) w / (GLfloat) h, 1.0, 100.0);
-	glMatrixMode(GL_MODELVIEW);
-}
-
-void keyboard(unsigned char key, int x, int y) {
-	switch (key) {
-	case 'q':
-	case 'Q':
-		exit(0);
-		break;
-	}
-}
-
-void idle() {
-	//TODO: logging
-
-	glutPostRedisplay();
-}
-
-void mouse(int button, int state, int x, int y){
-	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)	{
-		mouseDown = true;
-		xdiff = x - yrot;
-		ydiff = -y + xrot;
-	} else {
-		mouseDown = false;
-	}
-}
-
-void mouseMotion(int x, int y){
-	if (mouseDown){
-		yrot = x - xdiff;
-		xrot = y + ydiff;
-		glutPostRedisplay();
-	}
-}
-
-int main(int argc, char** argv) {
-	glutInit(&argc, argv);
-	glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
-	glutInitWindowSize(500, 500);
-	glutInitWindowPosition(100, 100);
-
-	glutCreateWindow("Terrain Shader");
-	glutDisplayFunc(display);
-	glutReshapeFunc(reshape);
-	glutKeyboardFunc(keyboard);
-	glutMouseFunc(mouse);
-	glutMotionFunc(mouseMotion);
-	glutIdleFunc(idle);
-
-	GLenum err = glewInit();
-	if (GLEW_OK != err)
-	{
-		/* Problem: glewInit failed, something is seriously wrong. */
-		fprintf(stderr, "Error: %s\n", glewGetErrorString(err));
-	}
-
-	init();
 	glutMainLoop();
 
-	return 0;
+	exit(EXIT_SUCCESS);
 }
 
+void Initialize(int argc, char* argv[])
+{
+	InitWindow(argc, argv);
 
+	fprintf(
+		stdout,
+		"INFO: OpenGL Version: %s\n",
+		glGetString(GL_VERSION)
+		);
 
+	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+}
 
+void InitWindow(int argc, char* argv[])
+{
+	glutInit(&argc, argv);
 
+	glutInitContextVersion(4, 0);
+	glutInitContextFlags(GLUT_FORWARD_COMPATIBLE);
+	glutInitContextProfile(GLUT_CORE_PROFILE);
 
+	glutSetOption(
+		GLUT_ACTION_ON_WINDOW_CLOSE,
+		GLUT_ACTION_GLUTMAINLOOP_RETURNS
+		);
+
+	glutInitWindowSize(CurrentWidth, CurrentHeight);
+
+	glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
+
+	WindowHandle = glutCreateWindow(WINDOW_TITLE_PREFIX);
+
+	if(WindowHandle < 1) {
+		fprintf(
+			stderr,
+			"ERROR: Could not create a new rendering window.\n"
+			);
+		exit(EXIT_FAILURE);
+	}
+
+	glutReshapeFunc(ResizeFunction);
+	glutDisplayFunc(RenderFunction);
+}
+
+void ResizeFunction(int Width, int Height)
+{
+	CurrentWidth = Width;
+	CurrentHeight = Height;
+	glViewport(0, 0, CurrentWidth, CurrentHeight);
+}
+
+void RenderFunction(void)
+{
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	glutSwapBuffers();
+	glutPostRedisplay();
+}
