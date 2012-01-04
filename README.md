@@ -16,6 +16,11 @@ License:
 - based on code [MIT Licensed](http://www.opensource.org/licenses/mit-license.php) 
 	from http://openglbook.com by [Eddy Luten](https://twitter.com/#!/EddyLuten).
 
+Controlls:
+----------
+- w, a, s, d	- move camera
+- drag mouse	- rotate camera
+
 Install - Windows:
 ------------------
 1. update your graphics driver.

@@ -22,6 +22,14 @@ Matrix
 float CubeRotation = 0;
 clock_t LastTime = 0;
 
+int 
+	lastMousePosX = 0,
+	lastMousePosY = 0;
+
+float
+	mouseSensitivityX = 0.2,
+	mouseSensitivityY = 0.2;
+
 void initialize(int, char*[]);
 void initWindow(int, char*[]);
 void resizeFunction(int, int);
@@ -31,6 +39,9 @@ void idleFunction(void);
 void createCube(void);
 void destroyCube(void);
 void drawCube(void);
+void keyboardFunction(unsigned char, int, int);
+void mouseButton(int, int, int, int);
+void mouseDrag(int, int);
 
 int main(int argc, char* argv[]) {
 	initialize(argc, argv);
@@ -114,6 +125,52 @@ void initWindow(int argc, char* argv[]) {
 	glutIdleFunc(idleFunction);
 	glutTimerFunc(0, timerFunction, 0);
 	glutCloseFunc(destroyCube);
+	glutKeyboardFunc(keyboardFunction);
+	glutMouseFunc(mouseButton);
+	glutMotionFunc(mouseDrag);
+}
+
+void keyboardFunction(unsigned char Key, int X, int Y)
+{
+	switch (Key) {
+	case 'w':
+		translateMatrix(&ViewMatrix, 0, 0, 0.1);
+		break;
+	case 's':
+		translateMatrix(&ViewMatrix, 0, 0, -0.1);
+		break;
+	case 'a':
+		translateMatrix(&ViewMatrix, 0.1, 0, 0);
+		break;
+	case 'd':
+		translateMatrix(&ViewMatrix, -0.1, 0, 0);
+		break;
+	default:
+		break;
+	}
+}
+
+/* MOUSE: check on mouse button pressed to save the position of the mouse when a button was pressed */
+void mouseButton(int button, int state, int x, int y){
+	if(state == GLUT_DOWN){
+		lastMousePosX = x;
+		lastMousePosY = y;
+	}
+}
+
+/* MOUSE: calculate mouse movement and set global variables */
+void mouseDrag(int x, int y){
+	// calculate deltas (= how far has the mouse moved since the last call)
+	int deltaX = x - lastMousePosX;
+	int deltaY = y - lastMousePosY;
+
+	// x and y are swapped because 2d screen x, y are different from 3d x, y
+	rotateAboutX(&ViewMatrix, degreesToRadians(-deltaY * mouseSensitivityY));
+	rotateAboutY(&ViewMatrix, degreesToRadians(deltaX * mouseSensitivityX));
+
+	// set lastMousePos to the current values
+	lastMousePosX = x;
+	lastMousePosY = y;
 }
 
 void resizeFunction(int Width, int Height) {
