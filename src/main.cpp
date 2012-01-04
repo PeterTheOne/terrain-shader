@@ -225,19 +225,58 @@ void timerFunction(int Value) {
 }
 
 void createPlane() {
-	const Vertex VERTICES[4] =
+	const int m = 2;
+	const int n = 2;
+
+	Vertex vertices[(m + 1) * (n + 1)];
+	for (int i = 0; i <= m; i++) {
+		for (int j = 0; j <= n; j++) {
+			float Position[4] = {i * 1.0f, 0.0f, j * 1.0f, 1.0f};
+			float Color[4] = { 0.0f, 0.0f, 1.0f, 1.0f };
+
+			vertices[i * (n + 1) + j].Position = Position;
+			vertices[i * (n + 1) + j].Color = Color;
+		}
+	}
+	const Vertex VERTICES[(m + 1) * (n + 1)] = vertices;
+
+	GLuint indices[m * n * 12];
+	for (int i = 0; i < m; i++) {
+		for (int j = 0; j < n; j++) {
+			// first tri
+			indices[(i * n + j) * 12 + 0] = i * (n + 1) + j;			// bottom left
+			indices[(i * n + j) * 12 + 1] = i * (n + 1) + j + 1;		// bottom right
+			indices[(i * n + j) * 12 + 2] = (i + 1) * (n + 1) + j;		// top left
+
+			indices[(i * n + j) * 12 + 3] = 0;
+			indices[(i * n + j) * 12 + 4] = 0;
+			indices[(i * n + j) * 12 + 5] = 0;
+
+			// second tri
+			indices[(i * n + j) * 12 + 6] = (i + 1) * (n + 1) + j;		// top left
+			indices[(i * n + j) * 12 + 7] = i * (n + 1) + j + 1;		// bottom right
+			indices[(i * n + j) * 12 + 8] = (i + 1) * (n + 1) + j + 1;	// top right
+
+			indices[(i * n + j) * 12 + 9] = 0;
+			indices[(i * n + j) * 12 + 10] = 0;
+			indices[(i * n + j) * 12 + 11] = 0;
+		}
+	}
+	const GLuint INDICES[m * n * 12] = indices;
+
+	/*const Vertex VERTICES[4] =
 	{
-		{ { 0.5f,  0.0f,  0.5f, 1 }, { 0, 0, 1, 1 } },
-		{ { 0.5f,  0.0f, -0.5f, 1 }, { 1, 0, 0, 1 } },
-		{ {-0.5f,  0.0f, -0.5f, 1 }, { 0, 1, 0, 1 } },
-		{ {-0.5f,  0.0f,  0.5f, 1 }, { 0, 1, 1, 1 } }
+	{ { 0.5f,  0.0f,  0.5f, 1 }, { 0, 0, 1, 1 } },
+	{ { 0.5f,  0.0f, -0.5f, 1 }, { 1, 0, 0, 1 } },
+	{ {-0.5f,  0.0f, -0.5f, 1 }, { 0, 1, 0, 1 } },
+	{ {-0.5f,  0.0f,  0.5f, 1 }, { 0, 1, 1, 1 } }
 	};
 
 	const GLuint INDICES[12] =
 	{
 		0,1,2,  0,1,2,
 		2,3,0,  2,3,0
-	};
+	};*/
 
 	ShaderIds[0] = glCreateProgram();
 	exitOnGLError("ERROR: Could not create the shader program");
