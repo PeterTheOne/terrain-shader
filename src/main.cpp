@@ -28,8 +28,12 @@ float
 	mouseSensitivityY = 0.2;
 
 const int 
-	plane_width = 5, 
-	plane_height = 8;
+	plane_width = 100, 
+	plane_height = 100;
+
+const float
+	tile_width = 0.5f,
+	tile_height = 0.5f;
 
 void initialize(int, char*[]);
 void initWindow(int, char*[]);
@@ -232,7 +236,7 @@ void createPlane() {
 	Vertex vertices[(plane_width + 1) * (plane_height + 1)];
 	for (int i = 0; i <= plane_width; i++) {
 		for (int j = 0; j <= plane_height; j++) {
-			float Position[4] = {i * 1.0f, 0.0f, j * 1.0f, 1.0f};
+			float Position[4] = {i * tile_width, 0.0f, j * tile_height, 1.0f};
 			float Color[4] = { 1.0f, 0.0f, 1.0f, 1.0f };
 
 			for (int k = 0; k < 4; k++) {
