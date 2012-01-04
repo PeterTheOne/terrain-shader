@@ -19,9 +19,6 @@ Matrix
 	ViewMatrix,
 	ModelMatrix;
 
-float CubeRotation = 0;
-clock_t LastTime = 0;
-
 int 
 	lastMousePosX = 0,
 	lastMousePosY = 0;
@@ -36,9 +33,9 @@ void resizeFunction(int, int);
 void renderFunction(void);
 void timerFunction(int);
 void idleFunction(void);
-void createCube(void);
-void destroyCube(void);
-void drawCube(void);
+void createPlane(void);
+void destroyPlane(void);
+void drawPlane(void);
 void keyboardFunction(unsigned char, int, int);
 void mouseButton(int, int, int, int);
 void mouseDrag(int, int);
@@ -89,9 +86,9 @@ void initialize(int argc, char* argv[]) {
 	ModelMatrix = IDENTITY_MATRIX;
 	ProjectionMatrix = IDENTITY_MATRIX;
 	ViewMatrix = IDENTITY_MATRIX;
-	translateMatrix(&ViewMatrix, 0, 0, -2);
+	translateMatrix(&ViewMatrix, 0, -1, -2);
 
-	createCube();
+	createPlane();
 }
 
 void initWindow(int argc, char* argv[]) {
@@ -124,7 +121,7 @@ void initWindow(int argc, char* argv[]) {
 	glutDisplayFunc(renderFunction);
 	glutIdleFunc(idleFunction);
 	glutTimerFunc(0, timerFunction, 0);
-	glutCloseFunc(destroyCube);
+	glutCloseFunc(destroyPlane);
 	glutKeyboardFunc(keyboardFunction);
 	glutMouseFunc(mouseButton);
 	glutMotionFunc(mouseDrag);
@@ -195,7 +192,7 @@ void renderFunction(void) {
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	drawCube();
+	drawPlane();
 	
 	glutSwapBuffers();
 	glutPostRedisplay();
@@ -227,27 +224,19 @@ void timerFunction(int Value) {
 	glutTimerFunc(250, timerFunction, 1);
 }
 
-void createCube() {
-	const Vertex VERTICES[8] =
+void createPlane() {
+	const Vertex VERTICES[4] =
 	{
-		{ { -.5f, -.5f,  .5f, 1 }, { 0, 0, 1, 1 } },
-		{ { -.5f,  .5f,  .5f, 1 }, { 1, 0, 0, 1 } },
-		{ {  .5f,  .5f,  .5f, 1 }, { 0, 1, 0, 1 } },
-		{ {  .5f, -.5f,  .5f, 1 }, { 1, 1, 0, 1 } },
-		{ { -.5f, -.5f, -.5f, 1 }, { 1, 1, 1, 1 } },
-		{ { -.5f,  .5f, -.5f, 1 }, { 1, 0, 0, 1 } },
-		{ {  .5f,  .5f, -.5f, 1 }, { 1, 0, 1, 1 } },
-		{ {  .5f, -.5f, -.5f, 1 }, { 0, 0, 1, 1 } }
+		{ { 0.5f,  0.0f,  0.5f, 1 }, { 0, 0, 1, 1 } },
+		{ { 0.5f,  0.0f, -0.5f, 1 }, { 1, 0, 0, 1 } },
+		{ {-0.5f,  0.0f, -0.5f, 1 }, { 0, 1, 0, 1 } },
+		{ {-0.5f,  0.0f,  0.5f, 1 }, { 0, 1, 1, 1 } }
 	};
 
-	const GLuint INDICES[36] =
+	const GLuint INDICES[12] =
 	{
-		0,2,1,  0,3,2,
-		4,3,0,  4,7,3,
-		4,1,5,  4,0,1,
-		3,6,2,  3,7,6,
-		1,6,5,  1,2,6,
-		7,5,6,  7,4,5
+		0,1,2,  0,1,2,
+		2,3,0,  2,3,0
 	};
 
 	ShaderIds[0] = glCreateProgram();
@@ -293,7 +282,7 @@ void createCube() {
 	glBindVertexArray(0);
 }
 
-void destroyCube() {
+void destroyPlane() {
 	glDetachShader(ShaderIds[0], ShaderIds[1]);
 	glDetachShader(ShaderIds[0], ShaderIds[2]);
 	glDeleteShader(ShaderIds[1]);
@@ -306,20 +295,8 @@ void destroyCube() {
 	exitOnGLError("ERROR: Could not destroy the buffer objects");
 }
 
-void drawCube(void) {
-	float CubeAngle;
-	clock_t Now = clock();
-
-	if (LastTime == 0)
-		LastTime = Now;
-
-	CubeRotation += 45.0f * ((float)(Now - LastTime) / CLOCKS_PER_SEC);
-	CubeAngle = degreesToRadians(CubeRotation);
-	LastTime = Now;
-
+void drawPlane() {
 	ModelMatrix = IDENTITY_MATRIX;
-	rotateAboutY(&ModelMatrix, CubeAngle);
-	rotateAboutX(&ModelMatrix, CubeAngle);
 
 	glUseProgram(ShaderIds[0]);
 	exitOnGLError("ERROR: Could not use the shader program");
@@ -331,7 +308,7 @@ void drawCube(void) {
 	glBindVertexArray(BufferIds[0]);
 	exitOnGLError("ERROR: Could not bind the VAO for drawing purposes");
 
-	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, (GLvoid*)0);
+	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, (GLvoid*)0);	// TODO: wtf 36
 	exitOnGLError("ERROR: Could not draw the cube");
 
 	glBindVertexArray(0);
