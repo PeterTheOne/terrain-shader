@@ -8,8 +8,13 @@ tutorials of http://openglbook.com/ and http://www.swiftless.com/
 
 Created by:
 -----------
-- Peter Grassberger (PeterTheOne)
-- Alexander Hörlesberger (hoerles1983)
+- [Peter Grassberger (PeterTheOne)](http://petergrassberger.com)
+- [Alexander Hörlesberger (hoerles1983)](http://www.hoerles.com/)
+
+License:
+--------
+- based on code [MIT Licensed](http://www.opensource.org/licenses/mit-license.php) 
+	from http://openglbook.com by [Eddy Luten](https://twitter.com/#!/EddyLuten).
 
 Install - Windows:
 ------------------

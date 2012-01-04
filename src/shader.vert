@@ -1,9 +1,15 @@
+#version 330
 
+layout(location=0) in vec4 in_Position;
+layout(location=1) in vec4 in_Color;
+out vec4 ex_Color;
 
-void main() {			
-	// Set the position of the current vertex 
-	gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
+uniform mat4 ModelMatrix;
+uniform mat4 ViewMatrix;
+uniform mat4 ProjectionMatrix;
 
-	// gl_Color from openGL application
-	gl_FrontColor = gl_Color;
+void main(void)
+{
+	gl_Position = (ProjectionMatrix * ViewMatrix * ModelMatrix) * in_Position;
+	ex_Color = in_Color;
 }
