@@ -128,6 +128,31 @@ void exitOnGLError(const char* error_message) {
 	}
 }
 
+void validateShader(GLuint shader, const char* file = 0) {
+	const unsigned int BUFFER_SIZE = 512;
+	char buffer[BUFFER_SIZE];
+	memset(buffer, 0, BUFFER_SIZE);
+	GLsizei length = 0;
+
+	glGetShaderInfoLog(shader, BUFFER_SIZE, &length, buffer);
+	if (length > 0) {
+		std::cerr << "Shader " << shader << " (" << (file ? file : "") <<
+			") compile error: " << std::endl << buffer << std::endl;
+	}
+}
+
+void validateProgram(GLuint program) {
+	const unsigned int BUFFER_SIZE = 512;
+	char buffer[BUFFER_SIZE];
+	memset(buffer, 0, BUFFER_SIZE);
+	GLsizei length = 0;
+
+	glGetShaderInfoLog(program, BUFFER_SIZE, &length, buffer);
+	if (length > 0) {
+		std::cerr << "Program " << program << "link error: " << buffer << std::endl;
+	}
+}
+
 GLuint loadShader(const char* filename, GLenum shader_type) {
 	GLuint shader_id = 0;
 	FILE* file;
@@ -152,6 +177,7 @@ GLuint loadShader(const char* filename, GLenum shader_type) {
 					const GLchar* glsl_source_fix = glsl_source;
 					glShaderSource(shader_id, 1, &glsl_source_fix, NULL);
 					glCompileShader(shader_id);
+					validateShader(shader_id);
 					exitOnGLError("Could not compile a shader");
 				}
 				else
