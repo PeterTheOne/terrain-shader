@@ -296,14 +296,6 @@ void createPlane() {
 		}
 	}
 
-	ShaderIds[0] = glCreateProgram();
-	exitOnGLError("ERROR: Could not create the shader program");
-	{
-		ShaderIds[1] = loadShader("./src/shader.frag", GL_FRAGMENT_SHADER);
-		ShaderIds[2] = loadShader("./src/shader.vert", GL_VERTEX_SHADER);
-		glAttachShader(ShaderIds[0], ShaderIds[1]);
-		glAttachShader(ShaderIds[0], ShaderIds[2]);
-	}
 	glLinkProgram(ShaderIds[0]);
 	exitOnGLError("ERROR: Could not link the shader program");
 
