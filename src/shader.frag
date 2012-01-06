@@ -1,11 +1,11 @@
 #version 330
 
-in vec4 ex_Color;
-smooth in vec2 ex_TexCoords;
+uniform sampler2D			colourMap;
 
-out vec4 out_Color;
+in vec4						ex_Color;
+smooth in vec2				ex_TexCoords;
 
-uniform sampler2D colourMap; // This is the original texture
+out vec4					out_Color;
 
 void main(void)
 {

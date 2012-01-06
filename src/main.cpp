@@ -1,66 +1,96 @@
 #include "utils.h"
 
-GLuint textureHandle;           // Create a uint to store the handle to our texture
-
-int CurrentWidth = 800,
-	CurrentHeight = 600,
-	WindowHandle = 0;
 
 GLuint
-	ProjectionMatrixUniformLocation,
-	ViewMatrixUniformLocation,
-	ModelMatrixUniformLocation,
-	BufferIds[3] = { 0 },
-	ShaderIds[3] = { 0 },
+	currentWidth = 800,
+	currentHeight = 600,
+	windowHandle = 0;
+
+GLuint
+	projectionMatrixUniformLocation, 
+	viewMatrixUniformLocation, 
+	modelMatrixUniformLocation, 
+	bufferIds[3] = { 0 }, 
+	shaderIds[3] = { 0 }, 
+	textureHandle, 
 	locColourMap;
 
 Matrix
-	ProjectionMatrix,
-	ViewMatrix,
-	ModelMatrix;
+	projectionMatrix, 
+	viewMatrix, 
+	modelMatrix;
 
 int 
-	lastMousePosX = 0,
+	lastMousePosX = 0, 
 	lastMousePosY = 0;
 
 float
-	mouseSensitivityX = 0.2,
-	mouseSensitivityY = 0.2;
+	mouseSensitivityX = 0.2f, 
+	mouseSensitivityY = 0.2f;
 
 const int 
 	plane_width = 100, 
 	plane_height = 100;
 
 const float
-	tile_width = 0.5f,
+	tile_width = 0.5f, 
 	tile_height = 0.5f;
 
 
-void idleFunction(void);
-void createPlane(void);
-void destroyPlane(void);
+// ----- Initialize Functions -----
+
+void init(int, char**);
+void initGlut(int, char**);
+void initGlew();
+void initDevIl();
+void loadImage();
+
+// ----- Create, Draw and Destroy Functions -----
+
+void createPlane();
+void drawPlane();
+void destroyPlane();
+
+// ----- Input Functions -----
+
 void keyboardFunction(unsigned char, int, int);
 void mouseButton(int, int, int, int);
 void mouseDrag(int, int);
+
+// ----- Other Functions -----
+
+void idleFunction();
 void resizeFunction(int, int);
 
-void init(int width, int height)
-{
-	//  ----- Initialise GLEW -----
-	GLenum err = glewInit();
-	if (GLEW_OK != err)
-	{
-		std::cout << "GLEW initialisation error: " << glewGetErrorString(err) << std::endl;
-		exit(-1);
-	}
-	std::cout << "GLEW intialised successfully. Using GLEW version: " << glewGetString(GLEW_VERSION) << std::endl;
+
+// ----- Main -----
+
+int main(int argc, char** argv) {
+	init(argc, argv);
+
+	glutMainLoop();
+
+	return EXIT_SUCCESS;
+}
+
+// ----- Initialize Functions -----
+
+void init(int argc, char** argv) {
+
+	// ----- Initialize Glut (Window) -----
+
+	initGlut(argc, argv);
+
+	// ----- Initialize Glew -----
+
+	initGlew();
 
 	// ----- Window and Projection Settings -----
 
-	ModelMatrix = IDENTITY_MATRIX;
-	ProjectionMatrix = IDENTITY_MATRIX;
-	ViewMatrix = IDENTITY_MATRIX;
-	translateMatrix(&ViewMatrix, 0, 0, -20);
+	modelMatrix = IDENTITY_MATRIX;
+	projectionMatrix = IDENTITY_MATRIX;
+	viewMatrix = IDENTITY_MATRIX;
+	translateMatrix(&viewMatrix, 0, -1, -20);
 
 	// ----- OpenGL settings -----
 
@@ -69,13 +99,74 @@ void init(int width, int height)
 	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST); // Ask for nicest perspective correction
 	glEnable(GL_TEXTURE_2D);                           // Enable 2D textures
 
-	// ----- Initialize DevIL libraries -----
+	// ----- Initialize DevIL -----
 
+	initDevIl();
+
+	// ----- Compile and Link Shader -----
+
+	shaderIds[0] = glCreateProgram();
+	exitOnGLError("ERROR: Could not create the shader program");
+
+	shaderIds[1] = loadShader("./src/shader.frag", GL_FRAGMENT_SHADER);
+	shaderIds[2] = loadShader("./src/shader.vert", GL_VERTEX_SHADER);
+	glAttachShader(shaderIds[0], shaderIds[1]);
+	glAttachShader(shaderIds[0], shaderIds[2]);
+
+	glLinkProgram(shaderIds[0]);
+	validateProgram(shaderIds[0]);
+	glGetError(); // ignore link error
+	//exitOnGLError("ERROR: Could not link the shader program");
+
+	// ----- glGetUniformLocation model, view, projection -----
+
+	modelMatrixUniformLocation = glGetUniformLocation(shaderIds[0], "ModelMatrix");
+	viewMatrixUniformLocation = glGetUniformLocation(shaderIds[0], "ViewMatrix");
+	projectionMatrixUniformLocation = glGetUniformLocation(shaderIds[0], "ProjectionMatrix");
+	exitOnGLError("ERROR: Could not get shader uniform locations");
+
+	locColourMap = glGetUniformLocation(shaderIds[0], "colourMap");
+	exitOnGLError("ERROR: locColourMap");
+
+	// ----- loadImage -----
+
+	loadImage();
+
+	// ----- createPlane -----
+
+	createPlane();
+}
+
+void initGlut(int argc, char** argv) {
+	glutInit(&argc, argv);
+	glutInitWindowSize(currentWidth, currentHeight);
+	glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH | GLUT_STENCIL);
+	glutCreateWindow("terrain-shader");
+
+	glutIdleFunc(idleFunction);
+	glutDisplayFunc(drawPlane);
+	glutKeyboardFunc(keyboardFunction);
+	glutMouseFunc(mouseButton);
+	glutMotionFunc(mouseDrag);
+	glutReshapeFunc(resizeFunction);
+}
+
+void initGlew() {
+	GLenum err = glewInit();
+	if (GLEW_OK != err)	{
+		std::cout << "GLEW initialisation error: " << glewGetErrorString(err) << std::endl;
+		exit(EXIT_FAILURE);
+	}
+	std::cout << "GLEW intialised successfully. Using GLEW version: " << glewGetString(GLEW_VERSION) << std::endl;
+}
+
+void initDevIl() {
 	// DevIL sanity check
-	if ( (iluGetInteger(IL_VERSION_NUM) < IL_VERSION) || (iluGetInteger(ILU_VERSION_NUM) < ILU_VERSION) || (ilutGetInteger(ILUT_VERSION_NUM) < ILUT_VERSION) )
-	{
+	if ((iluGetInteger(IL_VERSION_NUM) < IL_VERSION) || 
+			(iluGetInteger(ILU_VERSION_NUM) < ILU_VERSION) || 
+			(ilutGetInteger(ILUT_VERSION_NUM) < ILUT_VERSION)) {
 		std::cout << "DevIL versions are different... Exiting." << std::endl;
-		exit(-1);
+		exit(EXIT_FAILURE);
 	}
 
 	// Initialise all DevIL functionality
@@ -83,181 +174,26 @@ void init(int width, int height)
 	iluInit();
 	ilutInit();
 	ilutRenderer(ILUT_OPENGL);	// Tell DevIL that we're using OpenGL for our rendering
-	glGetError();
-
-	// shader
-	ShaderIds[0] = glCreateProgram();
-	exitOnGLError("ERROR: Could not create the shader program");
-	{
-		ShaderIds[1] = loadShader("./src/shader.frag", GL_FRAGMENT_SHADER);
-		ShaderIds[2] = loadShader("./src/shader.vert", GL_VERTEX_SHADER);
-		glAttachShader(ShaderIds[0], ShaderIds[1]);
-		glAttachShader(ShaderIds[0], ShaderIds[2]);
-	}
-	glLinkProgram(ShaderIds[0]);
-	validateProgram(ShaderIds[0]);
-	glGetError();
-	exitOnGLError("ERROR: Could not link the shader program");
-
-	ModelMatrixUniformLocation = glGetUniformLocation(ShaderIds[0], "ModelMatrix");
-	ViewMatrixUniformLocation = glGetUniformLocation(ShaderIds[0], "ViewMatrix");
-	ProjectionMatrixUniformLocation = glGetUniformLocation(ShaderIds[0], "ProjectionMatrix");
-	exitOnGLError("ERROR: Could not get shader uniform locations");
-
-	locColourMap = glGetUniformLocation(ShaderIds[0], "colourMap"); // The texture map
-	exitOnGLError("ERROR: locColourMap");
-
-	createPlane();
+	glGetError();				// ignore error
 }
 
-void drawScene()
-{
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Clear the screen and depth buffer
-
-	// Reset the matrix to identity
-	glMatrixMode(GL_MODELVIEW);
-
-	ModelMatrix = IDENTITY_MATRIX;
-
-	glUseProgram(ShaderIds[0]);
-	exitOnGLError("ERROR: Could not use the shader program");
-
-	glUniformMatrix4fv(ModelMatrixUniformLocation, 1, GL_FALSE, ModelMatrix.m);
-	glUniformMatrix4fv(ViewMatrixUniformLocation, 1, GL_FALSE, ViewMatrix.m);
-	exitOnGLError("ERROR: Could not set the shader uniforms");
-
+void loadImage() {
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, textureHandle); // Select the texture to use and bind to it
-	glUniform1i(locColourMap, 0);
-
-	// Draw our textured geometry (just a rectangle in this instance)
-	glEnable(GL_TEXTURE_2D);
-	
-
-
-
-	glBindVertexArray(BufferIds[0]);
-	exitOnGLError("ERROR: Could not bind the VAO for drawing purposes");
-
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	glBindTexture(GL_TEXTURE_2D, textureHandle);
-	glEnable(GL_TEXTURE_2D);
-	glDrawElements(GL_TRIANGLES, plane_width * plane_height * 12, GL_UNSIGNED_INT, (GLvoid*)0);
-	glDisable(GL_TEXTURE_2D);
-	exitOnGLError("ERROR: Could not draw the cube");
-
-	glBindVertexArray(0);
-	glUseProgram(0);
-
-
-
-
-	glDisable(GL_TEXTURE_2D);
-
-	// ----- Stop Drawing Stuff! ------
-	glutSwapBuffers();
-	glutPostRedisplay();
-}
-
-int main(int argc, char **argv)
-{
-	glutInit(&argc, argv);
-	glutInitWindowSize(CurrentWidth, CurrentHeight);
-	glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH | GLUT_STENCIL);
-	glutCreateWindow("Simple Reflection");
-
-	glutIdleFunc(idleFunction);
-	glutDisplayFunc(drawScene);
-	glutKeyboardFunc(keyboardFunction);
-	glutMouseFunc(mouseButton);
-	glutMotionFunc(mouseDrag);
-	glutReshapeFunc(resizeFunction);
-
-	init(CurrentWidth, CurrentHeight);
-
-	ILstring imageFilename = "./assets/heightmap.png";  // Specify filename
-
-	glActiveTexture(GL_TEXTURE0);
-	textureHandle = ilutGLLoadImage(imageFilename); // Load image directly to texture
+	ILstring imageFilename = "./assets/heightmap.png";
+	textureHandle = ilutGLLoadImage(imageFilename);
 
 	// Output last image loaded properties
 	// Available properties list is at: http://www-f9.ijs.si/~matevz/docs/DevIL/il/f00027.htm
 	std::cout << "Image width         : " << ilGetInteger(IL_IMAGE_WIDTH)          << std::endl;
 	std::cout << "Image height        : " << ilGetInteger(IL_IMAGE_HEIGHT)         << std::endl;
 	std::cout << "Image bits per pixel: " << ilGetInteger(IL_IMAGE_BITS_PER_PIXEL) << std::endl;
-
-	glutMainLoop();
-
-	return 0;
 }
 
-// new stuff
-
-void idleFunction(void) {
-	glutPostRedisplay();
-}
-
-void keyboardFunction(unsigned char Key, int X, int Y)
-{
-	switch (Key) {
-	case 'w':
-		translateMatrix(&ViewMatrix, 0, 0, 0.1);
-		break;
-	case 's':
-		translateMatrix(&ViewMatrix, 0, 0, -0.1);
-		break;
-	case 'a':
-		translateMatrix(&ViewMatrix, 0.1, 0, 0);
-		break;
-	case 'd':
-		translateMatrix(&ViewMatrix, -0.1, 0, 0);
-		break;
-	default:
-		break;
-	}
-}
-
-/* MOUSE: check on mouse button pressed to save the position of the mouse when a button was pressed */
-void mouseButton(int button, int state, int x, int y){
-	if(state == GLUT_DOWN){
-		lastMousePosX = x;
-		lastMousePosY = y;
-	}
-}
-
-/* MOUSE: calculate mouse movement and set global variables */
-void mouseDrag(int x, int y){
-	// calculate deltas (= how far has the mouse moved since the last call)
-	int deltaX = x - lastMousePosX;
-	int deltaY = y - lastMousePosY;
-
-	// x and y are swapped because 2d screen x, y are different from 3d x, y
-	rotateAboutX(&ViewMatrix, degreesToRadians(-deltaY * mouseSensitivityY));
-	rotateAboutY(&ViewMatrix, degreesToRadians(deltaX * mouseSensitivityX));
-
-	// set lastMousePos to the current values
-	lastMousePosX = x;
-	lastMousePosY = y;
-}
-
-void resizeFunction(int Width, int Height) {
-	CurrentWidth = Width;
-	CurrentHeight = Height;
-	glViewport(0, 0, CurrentWidth, CurrentHeight);
-	ProjectionMatrix =
-		CreateProjectionMatrix(
-		60,
-		(float)CurrentWidth / CurrentHeight,
-		1.0f,
-		100.0f
-		);
-
-	glUseProgram(ShaderIds[0]);
-	glUniformMatrix4fv(ProjectionMatrixUniformLocation, 1, GL_FALSE, ProjectionMatrix.m);
-	glUseProgram(0);
-}
+// ----- Create, Draw and Destroy Functions -----
 
 void createPlane() {
+	// ----- Create Vertex Array -----
+
 	Vertex vertices[(plane_width + 1) * (plane_height + 1)];
 	for (int i = 0; i <= plane_width; i++) {
 		for (int j = 0; j <= plane_height; j++) {
@@ -272,6 +208,8 @@ void createPlane() {
 			}
 		}
 	}
+
+	// ----- Create Index Array -----
 
 	GLuint indices[plane_width * plane_height * 12];
 	for (int i = 0; i < plane_width; i++) {
@@ -296,54 +234,178 @@ void createPlane() {
 		}
 	}
 
-	glLinkProgram(ShaderIds[0]);
-	exitOnGLError("ERROR: Could not link the shader program");
+	// ----- glGetUniformLocation model, view, projection -----
 
-	ModelMatrixUniformLocation = glGetUniformLocation(ShaderIds[0], "ModelMatrix");
-	ViewMatrixUniformLocation = glGetUniformLocation(ShaderIds[0], "ViewMatrix");
-	ProjectionMatrixUniformLocation = glGetUniformLocation(ShaderIds[0], "ProjectionMatrix");
-	exitOnGLError("ERROR: Could not get shader uniform locations");
+	// this is already done in init
+	// 	modelMatrixUniformLocation = glGetUniformLocation(shaderIds[0], "ModelMatrix");
+	// 	viewMatrixUniformLocation = glGetUniformLocation(shaderIds[0], "ViewMatrix");
+	// 	projectionMatrixUniformLocation = glGetUniformLocation(shaderIds[0], "ProjectionMatrix");
+	// 	exitOnGLError("ERROR: Could not get shader uniform locations");
 
-	glGenVertexArrays(1, &BufferIds[0]);
+	// ----- gen and bind VertexArray (Object) -----
+
+	glGenVertexArrays(1, &bufferIds[0]);
 	exitOnGLError("ERROR: Could not generate the VAO");
-	glBindVertexArray(BufferIds[0]);
+	glBindVertexArray(bufferIds[0]);
 	exitOnGLError("ERROR: Could not bind the VAO");
+
+	// ----- enable VertexAttribArrays -----
 
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
 	//glEnableVertexAttribArray(2);
 	exitOnGLError("ERROR: Could not enable vertex attributes");
 
-	glGenBuffers(2, &BufferIds[1]);
+	// ----- gen Vertex Buffer Object and bind to Vertex Array Object -----
+
+	glGenBuffers(2, &bufferIds[1]);
 	exitOnGLError("ERROR: Could not generate the buffer objects");
 
-	glBindBuffer(GL_ARRAY_BUFFER, BufferIds[1]);
+	glBindBuffer(GL_ARRAY_BUFFER, bufferIds[1]);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 	exitOnGLError("ERROR: Could not bind the VBO to the VAO");
+
+	// ----- set Vertex Array Object Attributes -----
 
 	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(vertices[0]), (GLvoid*)0);
 	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(vertices[0]), (GLvoid*)sizeof(vertices[0].Position));
 	//glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(vertices[0]), (GLvoid*)(sizeof(vertices[0].Position) + sizeof(vertices[0].Color)));
 	exitOnGLError("ERROR: Could not set VAO attributes");
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, BufferIds[2]);
+	// ----- gen Index Buffer Object and bind to Vertex Array Object -----
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bufferIds[2]);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 	exitOnGLError("ERROR: Could not bind the IBO to the VAO");
+
+	// ----- unbind Vertex Array? -----
 
 	glBindVertexArray(0);
 }
 
+void drawPlane() {
+	// ----- Clear Screen and buffers ------
+
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	// ----- Activate ------
+
+	// activate shader
+	glUseProgram(shaderIds[0]);
+	exitOnGLError("ERROR: Could not use the shader program");
+
+	// Reset the matrix to identity
+	glMatrixMode(GL_MODELVIEW);
+	modelMatrix = IDENTITY_MATRIX;
+
+	// set shader uniforms
+	glUniformMatrix4fv(modelMatrixUniformLocation, 1, GL_FALSE, modelMatrix.m);
+	glUniformMatrix4fv(viewMatrixUniformLocation, 1, GL_FALSE, viewMatrix.m);
+	exitOnGLError("ERROR: Could not set the shader uniforms");
+
+	// activate texture
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, textureHandle);
+	glUniform1i(locColourMap, 0);
+	glEnable(GL_TEXTURE_2D);
+	
+	// activate buffer
+	glBindVertexArray(bufferIds[0]);
+	exitOnGLError("ERROR: Could not bind the VAO for drawing purposes");
+
+	// polygon mode
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+	// ----- Draw ------
+
+	glDrawElements(GL_TRIANGLES, plane_width * plane_height * 12, GL_UNSIGNED_INT, (GLvoid*)0);
+	exitOnGLError("ERROR: Could not draw");
+
+	// ----- Deactivate ------
+
+	glBindVertexArray(0);
+	glDisable(GL_TEXTURE_2D);
+	glUseProgram(0);
+
+	// ----- Display ------
+	glutSwapBuffers();
+	glutPostRedisplay();
+}
+
 void destroyPlane() {
-	glDetachShader(ShaderIds[0], ShaderIds[1]);
-	glDetachShader(ShaderIds[0], ShaderIds[2]);
-	glDeleteShader(ShaderIds[1]);
-	glDeleteShader(ShaderIds[2]);
-	glDeleteProgram(ShaderIds[0]);
+	glDetachShader(shaderIds[0], shaderIds[1]);
+	glDetachShader(shaderIds[0], shaderIds[2]);
+	glDeleteShader(shaderIds[1]);
+	glDeleteShader(shaderIds[2]);
+	glDeleteProgram(shaderIds[0]);
 	exitOnGLError("ERROR: Could not destroy the shaders");
 
-	glDeleteBuffers(2, &BufferIds[1]);
-	glDeleteVertexArrays(1, &BufferIds[0]);
+	glDeleteBuffers(2, &bufferIds[1]);
+	glDeleteVertexArrays(1, &bufferIds[0]);
 	exitOnGLError("ERROR: Could not destroy the buffer objects");
 }
 
+// ----- Input Functions -----
 
+void keyboardFunction(unsigned char Key, int X, int Y) {
+	switch (Key) {
+	case 'w':
+		translateMatrix(&viewMatrix,  0.0f,  0.0f,  0.1f);
+		break;
+	case 's':
+		translateMatrix(&viewMatrix,  0.0f,  0.0f, -0.1f);
+		break;
+	case 'a':
+		translateMatrix(&viewMatrix,  0.1f,  0.0f,  0.0f);
+		break;
+	case 'd':
+		translateMatrix(&viewMatrix, -0.1f,  0.0f,  0.0f);
+		break;
+	default:
+		break;
+	}
+}
+
+void mouseButton(int button, int state, int x, int y) {
+	if(state == GLUT_DOWN){
+		lastMousePosX = x;
+		lastMousePosY = y;
+	}
+}
+
+void mouseDrag(int x, int y) {
+	// calculate deltas (= how far has the mouse moved since the last call)
+	int deltaX = x - lastMousePosX;
+	int deltaY = y - lastMousePosY;
+
+	// x and y are swapped because 2d screen x, y are different from 3d x, y
+	rotateAboutX(&viewMatrix, degreesToRadians(-deltaY * mouseSensitivityY));
+	rotateAboutY(&viewMatrix, degreesToRadians(deltaX * mouseSensitivityX));
+
+	// set lastMousePos to the current values
+	lastMousePosX = x;
+	lastMousePosY = y;
+}
+
+// ----- Other Functions -----
+
+void idleFunction(void) {
+	glutPostRedisplay();
+}
+
+void resizeFunction(int width, int height) {
+	currentWidth = width;
+	currentHeight = height;
+
+	projectionMatrix =
+		CreateProjectionMatrix(
+		60,
+		(float)currentWidth / currentHeight,
+		1.0f,
+		100.0f
+		);
+
+	glUseProgram(shaderIds[0]);
+	glUniformMatrix4fv(projectionMatrixUniformLocation, 1, GL_FALSE, projectionMatrix.m);
+	glUseProgram(0);
+}

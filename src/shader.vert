@@ -1,14 +1,15 @@
 #version 330
 
-layout(location=0) in vec4 in_Position;
-layout(location=1) in vec4 in_Color;
-layout(location=2) in vec4 in_Texture;
-out vec4 ex_Color;
-smooth out vec2 ex_TexCoords;
+uniform mat4				ModelMatrix;
+uniform mat4				ViewMatrix;
+uniform mat4				ProjectionMatrix;
 
-uniform mat4 ModelMatrix;
-uniform mat4 ViewMatrix;
-uniform mat4 ProjectionMatrix;
+layout(location=0) in vec4	in_Position;
+layout(location=1) in vec4	in_Color;
+layout(location=2) in vec4	in_Texture;
+
+out vec4					ex_Color;
+smooth out vec2				ex_TexCoords;
 
 void main(void)
 {
