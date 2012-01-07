@@ -98,10 +98,9 @@ void init(int argc, char** argv) {
 
 	// ----- OpenGL settings -----
 
-	glEnable(GL_DEPTH);                                // Enable the depth buffer
-	glDepthFunc(GL_LEQUAL);                            // Set our depth function to overwrite if new value less than or equal to current value
+	glEnable(GL_DEPTH_TEST);                                // Enable the depth buffer
+	glDepthFunc(GL_LESS);                            // Set our depth function to overwrite if new value less than or equal to current value
 	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST); // Ask for nicest perspective correction
-	glEnable(GL_TEXTURE_2D);                           // Enable 2D textures
 
 	// ----- Initialize DevIL -----
 
@@ -145,7 +144,7 @@ void init(int argc, char** argv) {
 void initGlut(int argc, char** argv) {
 	glutInit(&argc, argv);
 	glutInitWindowSize(currentWidth, currentHeight);
-	glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH | GLUT_STENCIL);
+	glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
 	glutCreateWindow("terrain-shader");
 
 	glutIdleFunc(idleFunction);
@@ -313,7 +312,6 @@ void drawPlane() {
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, textureHandle);
 	glUniform1i(locColourMap, 0);
-	glEnable(GL_TEXTURE_2D);
 	
 	// activate buffer
 	glBindVertexArray(bufferIds[0]);
@@ -334,7 +332,6 @@ void drawPlane() {
 	// ----- Deactivate ------
 
 	glBindVertexArray(0);
-	glDisable(GL_TEXTURE_2D);
 	glUseProgram(0);
 
 	// ----- Display ------
