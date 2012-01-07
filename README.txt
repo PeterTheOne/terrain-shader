@@ -6,7 +6,7 @@ University of Applied Sciences Upper Austrian, Campus Hagenberg.
 We want to create a shader for a changing terrain. It is based on the 
 tutorials of http://openglbook.com/ and http://www.swiftless.com/
 
-![terrain-shader image](/result_images/001_terrain-shader_fill-line.png "001 terrain-shader")
+![terrain-shader image](https://raw.github.com/PeterTheOne/terrain-shader/master/result_images/001_terrain-shader_fill-line.png "001 terrain-shader")
 
 Created by:
 -----------
