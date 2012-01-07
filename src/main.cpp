@@ -13,7 +13,8 @@ GLuint
 	bufferIds[3] = { 0 }, 
 	shaderIds[3] = { 0 }, 
 	textureHandle, 
-	locColourMap;
+	locColourMap,
+	locTerrainScale;
 
 Matrix
 	projectionMatrix, 
@@ -35,6 +36,9 @@ const int
 const float
 	tile_width = 0.5f, 
 	tile_height = 0.5f;
+
+bool lineMode = false;
+GLfloat terrainScale = 10;
 
 
 // ----- Initialize Functions -----
@@ -126,6 +130,7 @@ void init(int argc, char** argv) {
 	exitOnGLError("ERROR: Could not get shader uniform locations");
 
 	locColourMap = glGetUniformLocation(shaderIds[0], "colourMap");
+	locTerrainScale = glGetUniformLocation(shaderIds[0], "terrainScale");
 	exitOnGLError("ERROR: locColourMap");
 
 	// ----- loadImage -----
@@ -301,6 +306,9 @@ void drawPlane() {
 	glUniformMatrix4fv(viewMatrixUniformLocation, 1, GL_FALSE, viewMatrix.m);
 	exitOnGLError("ERROR: Could not set the shader uniforms");
 
+	// activate terrainScale
+	glUniform1f(locTerrainScale, terrainScale);
+
 	// activate texture
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, textureHandle);
@@ -312,7 +320,11 @@ void drawPlane() {
 	exitOnGLError("ERROR: Could not bind the VAO for drawing purposes");
 
 	// polygon mode
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	if (lineMode) {
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	} else {
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	}
 
 	// ----- Draw ------
 
@@ -347,6 +359,15 @@ void destroyPlane() {
 
 void keyboardFunction(unsigned char Key, int X, int Y) {
 	switch (Key) {
+	case 'l':
+		lineMode = !lineMode;
+		break;
+	case 'n':
+		++terrainScale;
+		break;
+	case 'm':
+		--terrainScale;
+		break;
 	case 'w':
 		translateMatrix(&viewMatrix,  0.0f,  0.0f,  0.1f);
 		break;
