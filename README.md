@@ -11,11 +11,16 @@ tutorials of http://openglbook.com/ and http://www.swiftless.com/
 Created by:
 -----------
 - [Peter Grassberger (PeterTheOne)](http://petergrassberger.com)
-- [Alexander Hörlesberger (hoerles1983)](http://www.hoerles.com/)
+- [Alexander Hörlesberger (hoerles1983)](http://www.hoerles.com)
+
+Special thanks to:
+------------------
+- [prettyvanilla](https://bitbucket.org/prettyvanilla) for some nice links.
+- [Stefan Grassberger (StevyGee)](http://stefangrassberger.com) for keeping me going.
 
 License:
 --------
-- based on code [MIT Licensed](http://www.opensource.org/licenses/mit-license.php) 
+- based on [MIT Licensed](http://www.opensource.org/licenses/mit-license.php) code 
 	from http://openglbook.com by [Eddy Luten](https://twitter.com/#!/EddyLuten).
 
 Controlls:
