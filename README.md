@@ -62,7 +62,7 @@ Install - Windows:
 6. Done and have fun developing
 
 Install - Windows (Alternative):
-------------------------------
+--------------------------------
 You can also put the libary files in the project folder if you want.
 *.dll files in the same folder as the *.exe
 and the other files in an /lib and /include/GL folder.
