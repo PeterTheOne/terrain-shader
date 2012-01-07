@@ -198,13 +198,13 @@ void createPlane() {
 	for (int i = 0; i <= plane_width; i++) {
 		for (int j = 0; j <= plane_height; j++) {
 			float Position[4] = {i * tile_width, 0.0f, j * tile_height, 1.0f};
-			float Color[4] = { 1.0f, 0.0f, 1.0f, 1.0f };
-			//float TexCoords[2] = {i / (float) plane_width, j / (float) plane_height};
+			float TexCoords[2] = {i / (float) plane_width, j / (float) plane_height};
 
 			for (int k = 0; k < 4; k++) {
-				vertices[i * (plane_height + 1) + j].Position[k] = Position[k];
-				vertices[i * (plane_height + 1) + j].Color[k] = Color[k];
-				//vertices[i * (plane_height + 1) + j].TexCoords[k] = TexCoords[k];
+				vertices[i * (plane_height + 1) + j].position[k] = Position[k];
+			}
+			for (int k = 0; k < 2; k++) {
+				vertices[i * (plane_height + 1) + j].texCoords[k] = TexCoords[k];
 			}
 		}
 	}
@@ -253,7 +253,6 @@ void createPlane() {
 
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
-	//glEnableVertexAttribArray(2);
 	exitOnGLError("ERROR: Could not enable vertex attributes");
 
 	// ----- gen Vertex Buffer Object and bind to Vertex Array Object -----
@@ -268,8 +267,7 @@ void createPlane() {
 	// ----- set Vertex Array Object Attributes -----
 
 	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(vertices[0]), (GLvoid*)0);
-	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(vertices[0]), (GLvoid*)sizeof(vertices[0].Position));
-	//glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(vertices[0]), (GLvoid*)(sizeof(vertices[0].Position) + sizeof(vertices[0].Color)));
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(vertices[0]), (GLvoid*)sizeof(vertices[0].position));
 	exitOnGLError("ERROR: Could not set VAO attributes");
 
 	// ----- gen Index Buffer Object and bind to Vertex Array Object -----
