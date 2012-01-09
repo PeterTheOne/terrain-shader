@@ -3,8 +3,12 @@
 
 terrain-shader is a project for our shader course at the
 University of Applied Sciences Upper Austrian, Campus Hagenberg. 
-We want to create a shader for a changing terrain. It is based on the 
-tutorials of http://openglbook.com/ and http://www.swiftless.com/
+We want to create a shader for a changing terrain. It is based on these 
+tutorials:
+- [OpenGL Book](http://openglbook.com/) - nice start for OpenGL 3.3 and 4.0 learning
+- [Switfless Tutorials](http://www.swiftless.com/) - read, compile and link GLSL shader
+- [wikibooks: OpenGL_Programming](http://en.wikibooks.org/wiki/OpenGL_Programming)
+	- [Glescraft_4](http://en.wikibooks.org/wiki/OpenGL_Programming/Glescraft_4) - first person camera controls
 
 ![terrain-shader image](https://raw.github.com/PeterTheOne/terrain-shader/master/result_images/001_terrain-shader_fill-line.png "001 terrain-shader")
 
@@ -25,6 +29,7 @@ License:
 
 Controlls:
 ----------
+- escape		- exit
 - w, a, s, d	- move camera
 - drag mouse	- rotate camera
 - l				- switch from line to fill modes
@@ -45,14 +50,17 @@ Install - Windows:
 		- link: http://openil.sf.net/
 		- file: "DevIL 1.7.8 SDK for 32-bit Windows"
 		- make sure use the 32-bit version! (also on 64-bit systems)
+	- glm
+		- link: http://glm.g-truc.net/
+		- file: "GLM 0.9.3.B"
 3. copy files in windows directories (only 32-bit files): 
 	- put the files in these windows folders: 
 		- *.dll					C:\Windows\System32
 		- for 64bit systems		C:\Windows\SysWOW64
 		- *.lib					C:\Program Files (x86)\Microsoft SDKs\Windows\v7.0A\Lib
-		- *.h					C:\Program Files (x86)\Microsoft SDKs\Windows\v7.0A\Include\GL
+		- *.h					C:\Program Files (x86)\Microsoft SDKs\Windows\v7.0A\Include\GL or IL or GLM
 	- or in these project folders: 
 		- *.dll					\
 		- *.lib					\lib\
-		- *.h					\include\GL
+		- *.h					\include\GL or IL or GLM
 4. Done and have fun developing

@@ -1,5 +1,17 @@
-#include "utils.h"
+#include <GLM/glm.hpp>
+#include <GLM/gtc/type_ptr.hpp>
+#include <GLM/gtc/matrix_transform.hpp>
+#include <GLM/gtx/constants.hpp>
 
+#include <GL/glew.h>		// Include GLEW, which pulls in OpenGL headers as required
+#include <GL/freeglut.h>
+
+#define ILUT_USE_OPENGL		// This MUST be defined before calling the DevIL headers or we don't get OpenGL functionality
+#include <IL/il.h>
+#include <IL/ilu.h>
+#include <IL/ilut.h>
+
+#include "utils.h"
 
 GLuint
 	currentWidth = 800,
@@ -16,18 +28,10 @@ GLuint
 	locColourMap,
 	locTerrainScale;
 
-Matrix
+glm::mat4 
 	projectionMatrix, 
 	viewMatrix, 
 	modelMatrix;
-
-int 
-	lastMousePosX = 0, 
-	lastMousePosY = 0;
-
-float
-	mouseSensitivityX = 0.2f, 
-	mouseSensitivityY = 0.2f;
 
 const int 
 	plane_width = 100, 
@@ -40,6 +44,24 @@ const float
 bool lineMode = false;
 GLfloat terrainScale = 10;
 
+// ----- Camera -----
+
+const int left = 1;
+const int right = 2;
+const int forward = 4;
+const int backward = 8;
+
+const float movespeed = 10;
+
+int move = 0;
+
+glm::vec3 position;
+glm::vec3 angles;
+glm::vec3 lookat;
+
+float
+	mouseSensitivityX = 0.01f, 
+	mouseSensitivityY = 0.01f;
 
 // ----- Initialize Functions -----
 
@@ -58,8 +80,8 @@ void destroyPlane();
 // ----- Input Functions -----
 
 void keyboardFunction(unsigned char, int, int);
-void mouseButton(int, int, int, int);
-void mouseDrag(int, int);
+void keyboardUpFunction(unsigned char, int, int);
+void mouseMove(int, int);
 
 // ----- Other Functions -----
 
@@ -91,10 +113,10 @@ void init(int argc, char** argv) {
 
 	// ----- Window and Projection Settings -----
 
-	modelMatrix = IDENTITY_MATRIX;
-	projectionMatrix = IDENTITY_MATRIX;
-	viewMatrix = IDENTITY_MATRIX;
-	translateMatrix(&viewMatrix, 0, -1, -20);
+	modelMatrix = glm::mat4(1.0f);
+	projectionMatrix = glm::mat4(1.0f);
+	viewMatrix = glm::mat4(1.0f);
+	viewMatrix = glm::translate(viewMatrix, glm::vec3(0.0f, -1.0f, -20.0f));
 
 	// ----- OpenGL settings -----
 
@@ -147,11 +169,14 @@ void initGlut(int argc, char** argv) {
 	glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
 	glutCreateWindow("terrain-shader");
 
+	glutSetCursor(GLUT_CURSOR_NONE);
+
 	glutIdleFunc(idleFunction);
 	glutDisplayFunc(drawPlane);
 	glutKeyboardFunc(keyboardFunction);
-	glutMouseFunc(mouseButton);
-	glutMotionFunc(mouseDrag);
+	glutKeyboardUpFunc(keyboardUpFunction);
+	glutMotionFunc(mouseMove);
+	glutPassiveMotionFunc(mouseMove);
 	glutReshapeFunc(resizeFunction);
 }
 
@@ -298,11 +323,11 @@ void drawPlane() {
 
 	// Reset the matrix to identity
 	glMatrixMode(GL_MODELVIEW);
-	modelMatrix = IDENTITY_MATRIX;
+	modelMatrix = glm::mat4(1.0f);
 
 	// set shader uniforms
-	glUniformMatrix4fv(modelMatrixUniformLocation, 1, GL_FALSE, modelMatrix.m);
-	glUniformMatrix4fv(viewMatrixUniformLocation, 1, GL_FALSE, viewMatrix.m);
+	glUniformMatrix4fv(modelMatrixUniformLocation, 1, GL_FALSE, glm::value_ptr(modelMatrix));
+	glUniformMatrix4fv(viewMatrixUniformLocation, 1, GL_FALSE, glm::value_ptr(viewMatrix));
 	exitOnGLError("ERROR: Could not set the shader uniforms");
 
 	// activate terrainScale
@@ -354,8 +379,11 @@ void destroyPlane() {
 
 // ----- Input Functions -----
 
-void keyboardFunction(unsigned char Key, int X, int Y) {
-	switch (Key) {
+void keyboardFunction(unsigned char key, int x, int y) {
+	switch (key) {
+	case 27: // ESCAPE key
+		exit (0);
+		break;
 	case 'l':
 		lineMode = !lineMode;
 		break;
@@ -365,47 +393,116 @@ void keyboardFunction(unsigned char Key, int X, int Y) {
 	case 'm':
 		--terrainScale;
 		break;
-	case 'w':
-		translateMatrix(&viewMatrix,  0.0f,  0.0f,  0.1f);
+	case 'w': // forward
+		move |= forward;
 		break;
-	case 's':
-		translateMatrix(&viewMatrix,  0.0f,  0.0f, -0.1f);
+	case 's': // backward
+		move |= backward;
 		break;
-	case 'a':
-		translateMatrix(&viewMatrix,  0.1f,  0.0f,  0.0f);
+	case 'a': // left
+		move |= left;
 		break;
-	case 'd':
-		translateMatrix(&viewMatrix, -0.1f,  0.0f,  0.0f);
+	case 'd': // right
+		move |= right;
+		break;
+	default:
+		break;
+	}
+
+	// Redraw Scene
+	glutPostRedisplay();
+}
+
+void keyboardUpFunction(unsigned char key, int x, int y) {
+	switch (key) {
+	case 'w': // forward
+		move &= ~forward;
+		break;
+	case 's': // backward
+		move &= ~backward;
+		break;
+	case 'a': // left
+		move &= ~left;
+		break;
+	case 'd': // right
+		move &= ~right;
 		break;
 	default:
 		break;
 	}
 }
 
-void mouseButton(int button, int state, int x, int y) {
-	if(state == GLUT_DOWN){
-		lastMousePosX = x;
-		lastMousePosY = y;
+void mouseMove(int x, int y) {
+	static bool wrap = false;
+
+	if(!wrap) {
+		int ww = currentWidth;
+		int wh = currentHeight;
+
+		int dx = x - ww / 2;
+		int dy = y - wh / 2;
+
+		// Do something with dx and dy here
+		angles.x -= dx * mouseSensitivityX;
+		angles.y -= dy * mouseSensitivityY;
+
+		if(angles.x < -glm::pi<float>())
+			angles.x += glm::pi<float>() * 2;
+		else if(angles.x > glm::pi<float>())
+			angles.x -= glm::pi<float>() * 2;
+
+		if(angles.y < -glm::half_pi<float>())
+			angles.y = -glm::half_pi<float>();
+		if(angles.y > glm::half_pi<float>())
+			angles.y = glm::half_pi<float>();
+
+		// TODO: move some stuff to idle func
+
+		lookat.x = sinf(angles.x) * cosf(angles.y);
+		lookat.y = sinf(angles.y);
+		lookat.z = cosf(angles.x) * cosf(angles.y);
+
+		viewMatrix = glm::lookAt(position, position + lookat, glm::vec3(0, 1, 0));
+
+		// move mouse pointer back to the center of the window
+		wrap = true;
+		glutWarpPointer(ww / 2, wh / 2);
+	} else {
+		wrap = false;
 	}
-}
 
-void mouseDrag(int x, int y) {
-	// calculate deltas (= how far has the mouse moved since the last call)
-	int deltaX = x - lastMousePosX;
-	int deltaY = y - lastMousePosY;
-
-	// x and y are swapped because 2d screen x, y are different from 3d x, y
-	rotateAboutX(&viewMatrix, degreesToRadians(-deltaY * mouseSensitivityY));
-	rotateAboutY(&viewMatrix, degreesToRadians(deltaX * mouseSensitivityX));
-
-	// set lastMousePos to the current values
-	lastMousePosX = x;
-	lastMousePosY = y;
+	// Redraw Scene
+	glutPostRedisplay();
 }
 
 // ----- Other Functions -----
 
 void idleFunction(void) {
+	static int pt = 0;
+
+	// Calculate time since last call to idle()
+	int t = glutGet(GLUT_ELAPSED_TIME);
+	float dt = (t - pt) * 1.0e-3;
+	pt = t;
+
+	// Calculate movement vectors
+	glm::vec3 forward_dir = lookat;
+	glm::vec3 right_dir = glm::vec3(-forward_dir.z, 0, forward_dir.x);
+
+
+	// Update camera position
+	if(move & left)
+		position -= right_dir * movespeed * dt;
+	if(move & right)
+		position += right_dir * movespeed * dt;
+	if(move & forward)
+		position += forward_dir * movespeed * dt;
+	if(move & backward)
+		position -= forward_dir * movespeed * dt;
+
+	viewMatrix = glm::lookAt(position, position + lookat, glm::vec3(0, 1, 0));
+
+	// Redraw Scene
 	glutPostRedisplay();
 }
 
@@ -413,15 +510,13 @@ void resizeFunction(int width, int height) {
 	currentWidth = width;
 	currentHeight = height;
 
-	projectionMatrix =
-		CreateProjectionMatrix(
-		60,
-		(float)currentWidth / currentHeight,
-		1.0f,
-		100.0f
-		);
+	projectionMatrix = glm::perspective(
+		60.0f, 
+		(float) currentWidth / currentHeight, 
+		0.1f, 
+		100.0f);
 
 	glUseProgram(shaderIds[0]);
-	glUniformMatrix4fv(projectionMatrixUniformLocation, 1, GL_FALSE, projectionMatrix.m);
+	glUniformMatrix4fv(projectionMatrixUniformLocation, 1, GL_FALSE, glm::value_ptr(projectionMatrix));
 	glUseProgram(0);
 }
