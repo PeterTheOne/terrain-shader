@@ -5,6 +5,7 @@ terrain-shader is a project for our shader course at the
 University of Applied Sciences Upper Austrian, Campus Hagenberg. 
 We want to create a shader for a changing terrain. It is based on these 
 tutorials:
+
 - [OpenGL Book](http://openglbook.com/) - nice start for OpenGL 3.3 and 4.0 learning
 - [Switfless Tutorials](http://www.swiftless.com/) - read, compile and link GLSL shader
 - [wikibooks: OpenGL_Programming](http://en.wikibooks.org/wiki/OpenGL_Programming)
