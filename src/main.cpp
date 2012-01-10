@@ -1,118 +1,4 @@
-#include <GLM/glm.hpp>
-#include <GLM/gtc/type_ptr.hpp>
-#include <GLM/gtc/matrix_transform.hpp>
-#include <GLM/gtx/constants.hpp>
-
-#include <GL/glew.h>		// Include GLEW, which pulls in OpenGL headers as required
-#include <GL/freeglut.h>
-
-#define ILUT_USE_OPENGL		// This MUST be defined before calling the DevIL headers or we don't get OpenGL functionality
-#include <IL/il.h>
-#include <IL/ilu.h>
-#include <IL/ilut.h>
-
-#include "utils.h"
-
-// ----- Window -----
-
-GLuint
-	currentWidth = 800,
-	currentHeight = 600,
-	windowHandle = 0;
-
-// ----- Shader -----
-
-GLuint
-	projectionMatrixUniformLocation, 
-	viewMatrixUniformLocation, 
-	modelMatrixUniformLocation, 
-	bufferIds[3] = { 0 }, 
-	shaderIds[3] = { 0 }, 
-	textureHandles[2] = { 0 }, 
-	locTerrainScale, 
-	locInterpolationScale,
-	locHeightMap, 
-	locHeightMap2, 
-	locKa, 
-	locKd, 
-	locGlobalAmbient, 
-	locLightColor, 
-	locLightPosition;
-
-glm::vec3
-		Ka = glm::vec3(1.0f, 1.0f, 1.0f), 
-		Kd = glm::vec3(0.5f, 0.5f, 0.5f), 
-		globalAmbient = glm::vec3(0.0f, 0.0f, 0.0f), 
-		lightColor = glm::vec3(1.0f, 1.0f, 1.0f), 
-		lightPosition = glm::vec3();
-
-glm::mat4 
-	projectionMatrix, 
-	viewMatrix, 
-	modelMatrix;
-
-// ----- Plane -----
-
-const int 
-	PLANE_WIDTH = 100, 
-	PLANE_HEIGHT = 100, 
-	PLANE_POLYGONS_PER_TILE = 2, 
-	PLANE_INDICES_PER_POLYGON = 3, 
-	PLANE_INDICES_PER_TILE = PLANE_POLYGONS_PER_TILE * PLANE_INDICES_PER_POLYGON, 
-	PLANE_NUM_INDICES = PLANE_WIDTH * PLANE_HEIGHT * PLANE_INDICES_PER_TILE;
-
-const float
-	PLANE_TILE_WIDTH = 0.5f, 
-	PLANE_TILE_HEIGHT = 0.5f;
-
-bool lineMode = false;
-GLfloat terrainScale = 10;
-GLfloat interpolationScale = 0;
-
-// ----- Camera -----
-
-const int left = 1;
-const int right = 2;
-const int forward = 4;
-const int backward = 8;
-
-const float movespeed = 10;
-
-int move = 0;
-
-glm::vec3 position;
-glm::vec3 angles;
-glm::vec3 lookat;
-
-float
-	mouseSensitivityX = 0.01f, 
-	mouseSensitivityY = 0.01f;
-
-// ----- Initialize Functions -----
-
-void init(int, char**);
-void initGlut(int, char**);
-void initGlew();
-void initDevIl();
-void loadImages();
-
-// ----- Create, Draw and Destroy Functions -----
-
-void createPlane();
-void drawPlane();
-void destroyPlane();
-
-// ----- Input Functions -----
-
-void keyboardFunction(unsigned char, int, int);
-void keyboardUpFunction(unsigned char, int, int);
-void mouseMove(int, int);
-
-// ----- Other Functions -----
-
-void idleFunction();
-void resizeFunction(int, int);
-
+#include "main.h"
 
 // ----- Main -----
 
@@ -127,72 +13,21 @@ int main(int argc, char** argv) {
 // ----- Initialize Functions -----
 
 void init(int argc, char** argv) {
+	initGlut(argc, argv);			// ----- Initialize Glut (Window) -----
 
-	// ----- Initialize Glut (Window) -----
+	initGlew();						// ----- Initialize Glew -----
 
-	initGlut(argc, argv);
+	setOpenGLSettings();			// ----- set OpenGL Settings -----
 
-	// ----- Initialize Glew -----
+	initDevIl();					// ----- Initialize DevIL -----
 
-	initGlew();
+	initShader();					// ----- Compile and Link Shader -----
 
-	// ----- Window and Projection Settings -----
+	setShaderUniformLocations();	// ----- get shader uniform locations -----
 
-	modelMatrix = glm::mat4(1.0f);
-	projectionMatrix = glm::mat4(1.0f);
-	viewMatrix = glm::mat4(1.0f);
-	viewMatrix = glm::translate(viewMatrix, glm::vec3(0.0f, -1.0f, -20.0f));
+	loadImages();					// ----- loadImage -----
 
-	// ----- OpenGL settings -----
-
-	glEnable(GL_DEPTH_TEST);                                // Enable the depth buffer
-	glDepthFunc(GL_LESS);                            // Set our depth function to overwrite if new value less than or equal to current value
-	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST); // Ask for nicest perspective correction
-
-	// ----- Initialize DevIL -----
-
-	initDevIl();
-
-	// ----- Compile and Link Shader -----
-
-	shaderIds[0] = glCreateProgram();
-	exitOnGLError("ERROR: Could not create the shader program");
-
-	shaderIds[1] = loadShader("./src/shader.frag", GL_FRAGMENT_SHADER);
-	shaderIds[2] = loadShader("./src/shader.vert", GL_VERTEX_SHADER);
-	glAttachShader(shaderIds[0], shaderIds[1]);
-	glAttachShader(shaderIds[0], shaderIds[2]);
-
-	glLinkProgram(shaderIds[0]);
-	validateProgram(shaderIds[0]);
-	glGetError(); // ignore link error
-	//exitOnGLError("ERROR: Could not link the shader program");
-
-	// ----- glGetUniformLocation model, view, projection -----
-
-	modelMatrixUniformLocation = glGetUniformLocation(shaderIds[0], "ModelMatrix");
-	viewMatrixUniformLocation = glGetUniformLocation(shaderIds[0], "ViewMatrix");
-	projectionMatrixUniformLocation = glGetUniformLocation(shaderIds[0], "ProjectionMatrix");
-	exitOnGLError("ERROR: Could not get shader uniform locations");
-
-	locHeightMap = glGetUniformLocation(shaderIds[0], "heightMap");
-	locHeightMap2 = glGetUniformLocation(shaderIds[0], "heightMap2");
-	locTerrainScale = glGetUniformLocation(shaderIds[0], "terrainScale");
-	locInterpolationScale = glGetUniformLocation(shaderIds[0], "interpolationScale");
-	locKa = glGetUniformLocation(shaderIds[0], "Ka");
-	locKd = glGetUniformLocation(shaderIds[0], "Kd");
-	locGlobalAmbient = glGetUniformLocation(shaderIds[0], "globalAmbient");
-	locLightColor = glGetUniformLocation(shaderIds[0], "lightColor");
-	locLightPosition = glGetUniformLocation(shaderIds[0], "lightPosition");
-	exitOnGLError("ERROR: Could not get shader uniform locations 2");
-
-	// ----- loadImage -----
-
-	loadImages();
-
-	// ----- createPlane -----
-
-	createPlane();
+	createPlane();					// ----- createPlane -----
 }
 
 void initGlut(int argc, char** argv) {
@@ -219,6 +54,49 @@ void initGlew() {
 		exit(EXIT_FAILURE);
 	}
 	std::cout << "GLEW intialised successfully. Using GLEW version: " << glewGetString(GLEW_VERSION) << std::endl;
+}
+
+void setOpenGLSettings() {
+	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LESS);
+	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+}
+
+void initShader() {
+	shaderIds[0] = glCreateProgram();
+	exitOnGLError("ERROR: Could not create the shader program");
+
+	shaderIds[1] = loadShader("./src/shader.frag", GL_FRAGMENT_SHADER);
+	shaderIds[2] = loadShader("./src/shader.vert", GL_VERTEX_SHADER);
+	glAttachShader(shaderIds[0], shaderIds[1]);
+	glAttachShader(shaderIds[0], shaderIds[2]);
+
+	glLinkProgram(shaderIds[0]);
+	validateProgram(shaderIds[0]);
+
+	// ignore link error
+	glGetError();
+	//exitOnGLError("ERROR: Could not link the shader program");
+}
+
+void setShaderUniformLocations() {
+	// set model-view-proj uniforms
+	modelMatrixUniformLocation = glGetUniformLocation(shaderIds[0], "ModelMatrix");
+	viewMatrixUniformLocation = glGetUniformLocation(shaderIds[0], "ViewMatrix");
+	projectionMatrixUniformLocation = glGetUniformLocation(shaderIds[0], "ProjectionMatrix");
+	exitOnGLError("ERROR: Could not get model-view-proj shader uniform locations");
+
+	// set other uniforms
+	locHeightMap = glGetUniformLocation(shaderIds[0], "heightMap");
+	locHeightMap2 = glGetUniformLocation(shaderIds[0], "heightMap2");
+	locTerrainScale = glGetUniformLocation(shaderIds[0], "terrainScale");
+	locInterpolationScale = glGetUniformLocation(shaderIds[0], "interpolationScale");
+	locKa = glGetUniformLocation(shaderIds[0], "Ka");
+	locKd = glGetUniformLocation(shaderIds[0], "Kd");
+	locGlobalAmbient = glGetUniformLocation(shaderIds[0], "globalAmbient");
+	locLightColor = glGetUniformLocation(shaderIds[0], "lightColor");
+	locLightPosition = glGetUniformLocation(shaderIds[0], "lightPosition");
+	exitOnGLError("ERROR: Could not get other shader uniform locations");
 }
 
 void initDevIl() {
