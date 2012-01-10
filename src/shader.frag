@@ -23,12 +23,12 @@ void main(void) {
 	vec3 N = vec3(0.0f, 1.0f, 0.0f);
 	
 	// Compute ambient term
-	//vec3 ambient = Ka * globalAmbient;
+	vec3 ambient = Ka * globalAmbient;
 
 	// Compute the diffuse term
-	//vec3 L = normalize(lightPosition - P);
-	//float diffuseLight = max(dot(L, N), 0);
-	//vec3 diffuse = Kd * lightColor * diffuseLight;
+	vec3 L = normalize(lightPosition - P);
+	float diffuseLight = max(dot(L, N), 0);
+	vec3 diffuse = Kd * lightColor * diffuseLight;
 
-	out_Color.rgb = /*(ambient + diffuse) **/ texture2D(heightMap, ex_TexCoords).rgb;
+	out_Color.rgb = (ambient + diffuse) * texture2D(heightMap, ex_TexCoords).rgb;
 }

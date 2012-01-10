@@ -77,9 +77,9 @@ GLuint
 glm::vec3
 	Ka = glm::vec3(1.0f, 1.0f, 1.0f), 
 	Kd = glm::vec3(0.5f, 0.5f, 0.5f), 
-	globalAmbient = glm::vec3(0.0f, 0.0f, 0.0f), 
+	globalAmbient = glm::vec3(0.1f, 0.1f, 0.1f), 
 	lightColor = glm::vec3(1.0f, 1.0f, 1.0f), 
-	lightPosition = glm::vec3();
+	lightPosition = glm::vec3(0.0f, 20.0f, 0.0f);
 
 glm::mat4 
 	modelMatrix = glm::mat4(1.0f), 
