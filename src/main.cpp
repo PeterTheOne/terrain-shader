@@ -169,6 +169,7 @@ void init(int argc, char** argv) {
 	exitOnGLError("ERROR: Could not get shader uniform locations");
 
 	locHeightMap = glGetUniformLocation(shaderIds[0], "heightMap");
+	locTerrainScale = glGetUniformLocation(shaderIds[0], "terrainScale");
 	locKa = glGetUniformLocation(shaderIds[0], "Ka");
 	locKd = glGetUniformLocation(shaderIds[0], "Kd");
 	locGlobalAmbient = glGetUniformLocation(shaderIds[0], "globalAmbient");
@@ -191,7 +192,7 @@ void initGlut(int argc, char** argv) {
 	glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
 	glutCreateWindow("terrain-shader");
 
-	//glutSetCursor(GLUT_CURSOR_NONE);
+	glutSetCursor(GLUT_CURSOR_NONE);
 
 	glutIdleFunc(idleFunction);
 	glutDisplayFunc(drawPlane);
