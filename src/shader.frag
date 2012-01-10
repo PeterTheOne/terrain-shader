@@ -19,8 +19,8 @@ out vec4					out_Color;
 
 // Obtain fragment elevation
 float getElevation(vec2 texcoord) {
-	vec3 color1 = texture2D(heightMap, ex_TexCoords).rgb;
-	vec3 color2 = texture2D(heightMap2, ex_TexCoords).rgb;
+	vec3 color1 = texture2D(heightMap, texcoord).rgb;
+	vec3 color2 = texture2D(heightMap2, texcoord).rgb;
     return (mix(color1, color2, interpolationScale).r);
 }
 
