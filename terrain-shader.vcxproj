@@ -11,6 +11,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\main.h" />
     <ClInclude Include="src\utils.h" />
   </ItemGroup>
   <ItemGroup>
