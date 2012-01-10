@@ -265,14 +265,6 @@ void createPlane() {
 		}
 	}
 
-	// ----- glGetUniformLocation model, view, projection -----
-
-	// this is already done in init
-	// 	modelMatrixUniformLocation = glGetUniformLocation(shaderIds[0], "ModelMatrix");
-	// 	viewMatrixUniformLocation = glGetUniformLocation(shaderIds[0], "ViewMatrix");
-	// 	projectionMatrixUniformLocation = glGetUniformLocation(shaderIds[0], "ProjectionMatrix");
-	// 	exitOnGLError("ERROR: Could not get shader uniform locations");
-
 	// ----- gen and bind VertexArray (Object) -----
 
 	glGenVertexArrays(1, &bufferIds[0]);
