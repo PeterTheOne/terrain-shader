@@ -25,8 +25,20 @@ GLuint
 	bufferIds[3] = { 0 }, 
 	shaderIds[3] = { 0 }, 
 	textureHandle, 
-	locColourMap,
-	locTerrainScale;
+	locHeightMap, 
+	locTerrainScale, 
+	locKa, 
+	locKd, 
+	locGlobalAmbient, 
+	locLightColor, 
+	locLightPosition;
+
+glm::vec3
+		Ka = glm::vec3(1.0f, 1.0f, 1.0f), 
+		Kd = glm::vec3(0.5f, 0.5f, 0.5f), 
+		globalAmbient = glm::vec3(0.0f, 0.0f, 0.0f), 
+		lightColor = glm::vec3(1.0f, 1.0f, 1.0f), 
+		lightPosition = glm::vec3();
 
 glm::mat4 
 	projectionMatrix, 
@@ -150,9 +162,13 @@ void init(int argc, char** argv) {
 	projectionMatrixUniformLocation = glGetUniformLocation(shaderIds[0], "ProjectionMatrix");
 	exitOnGLError("ERROR: Could not get shader uniform locations");
 
-	locColourMap = glGetUniformLocation(shaderIds[0], "colourMap");
-	locTerrainScale = glGetUniformLocation(shaderIds[0], "terrainScale");
-	exitOnGLError("ERROR: locColourMap");
+	locHeightMap = glGetUniformLocation(shaderIds[0], "heightMap");
+	locKa = glGetUniformLocation(shaderIds[0], "Ka");
+	locKd = glGetUniformLocation(shaderIds[0], "Kd");
+	locGlobalAmbient = glGetUniformLocation(shaderIds[0], "globalAmbient");
+	locLightColor = glGetUniformLocation(shaderIds[0], "lightColor");
+	locLightPosition = glGetUniformLocation(shaderIds[0], "lightPosition");
+	exitOnGLError("ERROR: Could not get shader uniform locations 2");
 
 	// ----- loadImage -----
 
@@ -169,7 +185,7 @@ void initGlut(int argc, char** argv) {
 	glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
 	glutCreateWindow("terrain-shader");
 
-	glutSetCursor(GLUT_CURSOR_NONE);
+	//glutSetCursor(GLUT_CURSOR_NONE);
 
 	glutIdleFunc(idleFunction);
 	glutDisplayFunc(drawPlane);
@@ -332,11 +348,17 @@ void drawPlane() {
 
 	// activate terrainScale
 	glUniform1f(locTerrainScale, terrainScale);
+	glUniform3fv(locKa, 1, glm::value_ptr(Ka));
+	glUniform3fv(locKd, 1, glm::value_ptr(Kd));
+	glUniform3fv(locGlobalAmbient, 1, glm::value_ptr(globalAmbient));
+	glUniform3fv(locLightColor, 1, glm::value_ptr(lightColor));
+	glUniform3fv(locLightPosition, 1, glm::value_ptr(lightPosition));
+	exitOnGLError("ERROR: Could not set the shader uniforms2");
 
 	// activate texture
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, textureHandle);
-	glUniform1i(locColourMap, 0);
+	glUniform1i(locHeightMap, 0);
 	
 	// activate buffer
 	glBindVertexArray(bufferIds[0]);
@@ -491,14 +513,18 @@ void idleFunction(void) {
 
 
 	// Update camera position
+	glm::vec3 velocity = glm::vec3(0.0f);
 	if(move & left)
-		position -= right_dir * movespeed * dt;
+		velocity -= right_dir;
 	if(move & right)
-		position += right_dir * movespeed * dt;
+		velocity += right_dir;
 	if(move & forward)
-		position += forward_dir * movespeed * dt;
+		velocity += forward_dir;
 	if(move & backward)
-		position -= forward_dir * movespeed * dt;
+		velocity -= forward_dir;
+
+	//TODO: normalize(velocity), not work?
+	position += velocity * movespeed * dt;
 
 	viewMatrix = glm::lookAt(position, position + lookat, glm::vec3(0, 1, 0));
 
