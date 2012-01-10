@@ -36,8 +36,11 @@ void initGlut(int argc, char** argv) {
 	glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
 	glutCreateWindow("terrain-shader");
 
+	// mouse
 	glutSetCursor(GLUT_CURSOR_NONE);
+	glutWarpPointer(currentWidth / 2, currentHeight / 2);
 
+	// register glut functions
 	glutIdleFunc(idleFunction);
 	glutDisplayFunc(drawPlane);
 	glutKeyboardFunc(keyboardFunction);
@@ -334,11 +337,8 @@ void mouseMove(int x, int y) {
 	static bool wrap = false;
 
 	if(!wrap) {
-		int ww = currentWidth;
-		int wh = currentHeight;
-
-		int dx = x - ww / 2;
-		int dy = y - wh / 2;
+		int dx = x - currentWidth / 2;
+		int dy = y - currentHeight / 2;
 
 		// Do something with dx and dy here
 		angles.x -= dx * mouseSensitivityX;
@@ -364,7 +364,7 @@ void mouseMove(int x, int y) {
 
 		// move mouse pointer back to the center of the window
 		wrap = true;
-		glutWarpPointer(ww / 2, wh / 2);
+		glutWarpPointer(currentWidth / 2, currentHeight / 2);
 	} else {
 		wrap = false;
 	}

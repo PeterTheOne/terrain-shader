@@ -84,9 +84,7 @@ glm::vec3
 glm::mat4 
 	modelMatrix = glm::mat4(1.0f), 
 	projectionMatrix = glm::mat4(1.0f), 
-	viewMatrix = glm::translate(
-		glm::mat4(1.0f), 
-		glm::vec3(0.0f, -1.0f, -20.0f));
+	viewMatrix = glm::mat4(1.0f);
 	
 // ----- Plane -----
 
@@ -116,9 +114,13 @@ const GLfloat movespeed = 10;
 
 int move = 0;
 
-glm::vec3 position;
-glm::vec3 angles;
-glm::vec3 lookat;
+glm::vec3 
+	position = glm::vec3(0.0f, 20.0f, 0.0f), 
+	angles = glm::vec3(
+		glm::quarter_pi<float>(), 
+		-glm::quarter_pi<float>() / 2, 
+		0), 
+	lookat;
 
 GLfloat
 	mouseSensitivityX = 0.01f, 
