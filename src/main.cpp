@@ -13,10 +13,14 @@
 
 #include "utils.h"
 
+// ----- Window -----
+
 GLuint
 	currentWidth = 800,
 	currentHeight = 600,
 	windowHandle = 0;
+
+// ----- Shader -----
 
 GLuint
 	projectionMatrixUniformLocation, 
