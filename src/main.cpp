@@ -45,13 +45,19 @@ glm::mat4
 	viewMatrix, 
 	modelMatrix;
 
+// ----- Plane -----
+
 const int 
-	plane_width = 100, 
-	plane_height = 100;
+	PLANE_WIDTH = 100, 
+	PLANE_HEIGHT = 100, 
+	PLANE_POLYGONS_PER_TILE = 2, 
+	PLANE_INDICES_PER_POLYGON = 3, 
+	PLANE_INDICES_PER_TILE = PLANE_POLYGONS_PER_TILE * PLANE_INDICES_PER_POLYGON, 
+	PLANE_NUM_INDICES = PLANE_WIDTH * PLANE_HEIGHT * PLANE_INDICES_PER_TILE;
 
 const float
-	tile_width = 0.5f, 
-	tile_height = 0.5f;
+	PLANE_TILE_WIDTH = 0.5f, 
+	PLANE_TILE_HEIGHT = 0.5f;
 
 bool lineMode = false;
 GLfloat terrainScale = 10;
@@ -239,43 +245,35 @@ void loadImage() {
 void createPlane() {
 	// ----- Create Vertex Array -----
 
-	Vertex vertices[(plane_width + 1) * (plane_height + 1)];
-	for (int i = 0; i <= plane_width; i++) {
-		for (int j = 0; j <= plane_height; j++) {
-			float Position[4] = {i * tile_width, 0.0f, j * tile_height, 1.0f};
-			float TexCoords[2] = {i / (float) plane_width, j / (float) plane_height};
+	Vertex vertices[(PLANE_WIDTH + 1) * (PLANE_HEIGHT + 1)];
+	for (int i = 0; i <= PLANE_WIDTH; i++) {
+		for (int j = 0; j <= PLANE_HEIGHT; j++) {
+			float Position[4] = {i * PLANE_TILE_WIDTH, 0.0f, j * PLANE_TILE_HEIGHT, 1.0f};
+			float TexCoords[2] = {i / (float) PLANE_WIDTH, j / (float) PLANE_HEIGHT};
 
 			for (int k = 0; k < 4; k++) {
-				vertices[i * (plane_height + 1) + j].position[k] = Position[k];
+				vertices[i * (PLANE_HEIGHT + 1) + j].position[k] = Position[k];
 			}
 			for (int k = 0; k < 2; k++) {
-				vertices[i * (plane_height + 1) + j].texCoords[k] = TexCoords[k];
+				vertices[i * (PLANE_HEIGHT + 1) + j].texCoords[k] = TexCoords[k];
 			}
 		}
 	}
 
 	// ----- Create Index Array -----
 
-	GLuint indices[plane_width * plane_height * 12];
-	for (int i = 0; i < plane_width; i++) {
-		for (int j = 0; j < plane_height; j++) {
+	GLuint indices[PLANE_NUM_INDICES];
+	for (int i = 0; i < PLANE_WIDTH; i++) {
+		for (int j = 0; j < PLANE_HEIGHT; j++) {
 			// first tri
-			indices[(i * plane_height + j) * 12 + 0] = i * (plane_height + 1) + j;			// bottom left
-			indices[(i * plane_height + j) * 12 + 1] = i * (plane_height + 1) + j + 1;		// bottom right
-			indices[(i * plane_height + j) * 12 + 2] = (i + 1) * (plane_height + 1) + j;		// top left
-
-			indices[(i * plane_height + j) * 12 + 3] = 0;
-			indices[(i * plane_height + j) * 12 + 4] = 0;
-			indices[(i * plane_height + j) * 12 + 5] = 0;
+			indices[(i * PLANE_HEIGHT + j) * PLANE_INDICES_PER_TILE + 0] = i * (PLANE_HEIGHT + 1) + j;				// bottom left
+			indices[(i * PLANE_HEIGHT + j) * PLANE_INDICES_PER_TILE + 1] = i * (PLANE_HEIGHT + 1) + j + 1;			// bottom right
+			indices[(i * PLANE_HEIGHT + j) * PLANE_INDICES_PER_TILE + 2] = (i + 1) * (PLANE_HEIGHT + 1) + j;		// top left
 
 			// second tri
-			indices[(i * plane_height + j) * 12 + 6] = (i + 1) * (plane_height + 1) + j;		// top left
-			indices[(i * plane_height + j) * 12 + 7] = i * (plane_height + 1) + j + 1;		// bottom right
-			indices[(i * plane_height + j) * 12 + 8] = (i + 1) * (plane_height + 1) + j + 1;	// top right
-
-			indices[(i * plane_height + j) * 12 + 9] = 0;
-			indices[(i * plane_height + j) * 12 + 10] = 0;
-			indices[(i * plane_height + j) * 12 + 11] = 0;
+			indices[(i * PLANE_HEIGHT + j) * PLANE_INDICES_PER_TILE + 3] = (i + 1) * (PLANE_HEIGHT + 1) + j;		// top left
+			indices[(i * PLANE_HEIGHT + j) * PLANE_INDICES_PER_TILE + 4] = i * (PLANE_HEIGHT + 1) + j + 1;			// bottom right
+			indices[(i * PLANE_HEIGHT + j) * PLANE_INDICES_PER_TILE + 5] = (i + 1) * (PLANE_HEIGHT + 1) + j + 1;	// top right
 		}
 	}
 
@@ -373,7 +371,7 @@ void drawPlane() {
 
 	// ----- Draw ------
 
-	glDrawElements(GL_TRIANGLES, plane_width * plane_height * 12, GL_UNSIGNED_INT, (GLvoid*)0);
+	glDrawElements(GL_TRIANGLES, PLANE_NUM_INDICES, GL_UNSIGNED_INT, (GLvoid*)0);
 	exitOnGLError("ERROR: Could not draw");
 
 	// ----- Deactivate ------
