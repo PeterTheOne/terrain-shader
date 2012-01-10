@@ -35,6 +35,7 @@ Controlls:
 - drag mouse	- rotate camera
 - l				- switch from line to fill modes
 - n, m			- scale terrain
+- i, o			- interpolate between two heightmaps
 
 Install - Windows:
 ------------------

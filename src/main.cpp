@@ -28,9 +28,11 @@ GLuint
 	modelMatrixUniformLocation, 
 	bufferIds[3] = { 0 }, 
 	shaderIds[3] = { 0 }, 
-	textureHandle, 
-	locColourMap,
-	locTerrainScale;
+	textureHandles[2] = { 0 }, 
+	locColourMap, 
+	locColourMap2, 
+	locTerrainScale, 
+	locInterpolationScale;
 
 glm::mat4 
 	projectionMatrix, 
@@ -53,6 +55,7 @@ const float
 
 bool lineMode = false;
 GLfloat terrainScale = 10;
+GLfloat interpolationScale = 0;
 
 // ----- Camera -----
 
@@ -79,7 +82,7 @@ void init(int, char**);
 void initGlut(int, char**);
 void initGlew();
 void initDevIl();
-void loadImage();
+void loadImages();
 
 // ----- Create, Draw and Destroy Functions -----
 
@@ -161,12 +164,14 @@ void init(int argc, char** argv) {
 	exitOnGLError("ERROR: Could not get shader uniform locations");
 
 	locColourMap = glGetUniformLocation(shaderIds[0], "colourMap");
+	locColourMap2 = glGetUniformLocation(shaderIds[0], "colourMap2");
 	locTerrainScale = glGetUniformLocation(shaderIds[0], "terrainScale");
+	locInterpolationScale = glGetUniformLocation(shaderIds[0], "interpolationScale");
 	exitOnGLError("ERROR: locColourMap");
 
 	// ----- loadImage -----
 
-	loadImage();
+	loadImages();
 
 	// ----- createPlane -----
 
@@ -216,10 +221,14 @@ void initDevIl() {
 	glGetError();				// ignore error
 }
 
-void loadImage() {
+void loadImages() {
 	glActiveTexture(GL_TEXTURE0);
 	ILstring imageFilename = "./assets/heightmap.png";
-	textureHandle = ilutGLLoadImage(imageFilename);
+	textureHandles[0] = ilutGLLoadImage(imageFilename);
+
+	glActiveTexture(GL_TEXTURE1);
+	ILstring imageFilename2 = "./assets/heightmap2.png";
+	textureHandles[1] = ilutGLLoadImage(imageFilename2);
 
 	// Output last image loaded properties
 	// Available properties list is at: http://www-f9.ijs.si/~matevz/docs/DevIL/il/f00027.htm
@@ -334,11 +343,15 @@ void drawPlane() {
 
 	// activate terrainScale
 	glUniform1f(locTerrainScale, terrainScale);
+	glUniform1f(locInterpolationScale, interpolationScale);
 
-	// activate texture
+	// activate textures
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, textureHandle);
+	glBindTexture(GL_TEXTURE_2D, textureHandles[0]);
 	glUniform1i(locColourMap, 0);
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, textureHandles[1]);
+	glUniform1i(locColourMap2, 1);
 	
 	// activate buffer
 	glBindVertexArray(bufferIds[0]);
@@ -394,6 +407,18 @@ void keyboardFunction(unsigned char key, int x, int y) {
 		break;
 	case 'm':
 		--terrainScale;
+		break;
+	case 'i': 
+		if (interpolationScale < 1.0f) {
+			interpolationScale += 0.1f;
+			std::cout << "interpolationScale: " << interpolationScale << std::endl;
+		}
+		break;
+	case 'o': 
+		if (interpolationScale >= 0.05f) {
+			interpolationScale -= 0.1f;
+			std::cout << "interpolationScale: " << interpolationScale << std::endl;
+		}
 		break;
 	case 'w': // forward
 		move |= forward;
