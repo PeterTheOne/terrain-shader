@@ -15,30 +15,44 @@ smooth in vec2				ex_TexCoords;
 
 out vec4					out_Color;
 
+const float					normalContrastScale = 0.3f;
+
 // Obtain fragment elevation
 float getElevation(vec2 texcoord) {
-    return (texture2D(heightMap, texcoord).r);
+    return (texture2D(heightMap, texcoord).r * normalContrastScale);
 }
 
 vec3 getNormal(vec2 texcoord, float sOffset, float tOffset) {
-	vec2 texcoordN = vec2(texcoord.s,			texcoord.t + tOffset);
-	vec2 texcoordE = vec2(texcoord.s + sOffset,	texcoord.t);
-	vec2 texcoordS = vec2(texcoord.s,			texcoord.t - tOffset);
-	vec2 texcoordW = vec2(texcoord.s - sOffset,	texcoord.t);
+	vec2 texcoordN =	vec2(texcoord.s,			texcoord.t + tOffset);
+	vec2 texcoordNE =	vec2(texcoord.s + sOffset,	texcoord.t + tOffset);
+	vec2 texcoordE =	vec2(texcoord.s + sOffset,	texcoord.t);
+	vec2 texcoordSE =	vec2(texcoord.s + sOffset,	texcoord.t - tOffset);
+	vec2 texcoordS =	vec2(texcoord.s,			texcoord.t - tOffset);
+	vec2 texcoordSW =	vec2(texcoord.s - sOffset,	texcoord.t - tOffset);
+	vec2 texcoordW =	vec2(texcoord.s - sOffset,	texcoord.t);
+	vec2 texcoordNW =	vec2(texcoord.s - sOffset,	texcoord.t + tOffset);
 	
-	vec3 v0 = vec3(0.0f,		getElevation(texcoord), 0.0f);
-
-	vec3 v1 = vec3(0.0f,		getElevation(texcoordN), +tOffset)	- v0;
-	vec3 v2 = vec3(+sOffset,	getElevation(texcoordE), 0.0f)		- v0;
-	vec3 v3 = vec3(0.0f,		getElevation(texcoordS), -tOffset)	- v0;
-	vec3 v4 = vec3(-sOffset,	getElevation(texcoordW), 0.0f)		- v0;
+	vec3 v[9];
+	v[0] = vec3(0.0f,		getElevation(texcoord),		0.0f);
+	v[1] = vec3(0.0f,		getElevation(texcoordN),	+tOffset)	- v[0];
+	v[2] = vec3(+sOffset,	getElevation(texcoordNE),	+tOffset)	- v[0];
+	v[3] = vec3(+sOffset,	getElevation(texcoordE),	0.0f)		- v[0];
+	v[4] = vec3(+sOffset,	getElevation(texcoordSE),	-tOffset)	- v[0];
+	v[5] = vec3(0.0f,		getElevation(texcoordS),	-tOffset)	- v[0];
+	v[6] = vec3(-tOffset,	getElevation(texcoordSW),	-tOffset)	- v[0];
+	v[7] = vec3(-sOffset,	getElevation(texcoordW),	0.0f)		- v[0];
+	v[8] = vec3(-sOffset,	getElevation(texcoordNW),	+tOffset)	- v[0];
 	
-	vec3 n0 = normalize(cross(v1, v2));
-	vec3 n1 = normalize(cross(v2, v3));
-	vec3 n2 = normalize(cross(v3, v4));
-	vec3 n3 = normalize(cross(v4, v1));
-
-	return (n0 + n1 + n2 + n3) / 4;
+	vec3 n0 = normalize(cross(v[1], v[2]));
+	vec3 n1 = normalize(cross(v[2], v[3]));
+	vec3 n2 = normalize(cross(v[3], v[4]));
+	vec3 n3 = normalize(cross(v[4], v[5]));
+	vec3 n4 = normalize(cross(v[5], v[6]));
+	vec3 n5 = normalize(cross(v[6], v[7]));
+	vec3 n6 = normalize(cross(v[7], v[8]));
+	vec3 n7 = normalize(cross(v[8], v[1]));
+	
+	return normalize(n0 + n1 + n2 + n3 + n4 + n5 + n6 + n7);
 }
 
 void main(void) {
