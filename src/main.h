@@ -29,7 +29,7 @@ void setOpenGLSettings();
 void initShader();
 void setShaderUniformLocations();
 void initDevIl();
-void loadImage();
+void loadImages();
 
 // ----- Create, Draw and Destroy Functions -----
 
@@ -65,8 +65,9 @@ GLuint
 	modelMatrixUniformLocation, 
 	bufferIds[3] = { 0 }, 
 	shaderIds[3] = { 0 }, 
-	textureHandle, 
+	textureHandles[2] = { 0 }, 
 	locHeightMap, 
+	locNormalMap, 
 	locTerrainScale, 
 	locKa, 
 	locKd, 

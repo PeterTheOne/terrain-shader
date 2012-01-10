@@ -1,6 +1,7 @@
 #version 330
 
 uniform sampler2D			heightMap;
+uniform sampler2D			normalMap;
 
 // light
 uniform	vec3				Ka;
@@ -19,8 +20,7 @@ void main(void) {
 
 
 	vec3 P = ex_objPosition.xyz;
-	//vec3 N = tex2D(normalmap, texCoord).xyz;
-	vec3 N = vec3(0.0f, 1.0f, 0.0f);
+	vec3 N = texture2D(normalMap, ex_TexCoords).xyz;
 	
 	// Compute ambient term
 	vec3 ambient = Ka * globalAmbient;
@@ -30,5 +30,5 @@ void main(void) {
 	float diffuseLight = max(dot(L, N), 0);
 	vec3 diffuse = Kd * lightColor * diffuseLight;
 
-	out_Color.rgb = (ambient + diffuse) * texture2D(heightMap, ex_TexCoords).rgb;
+	out_Color.rgb = (ambient + diffuse);
 }

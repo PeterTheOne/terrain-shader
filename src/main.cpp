@@ -25,7 +25,7 @@ void init(int argc, char** argv) {
 
 	setShaderUniformLocations();	// ----- get shader uniform locations -----
 
-	loadImage();					// ----- loadImage -----
+	loadImages();					// ----- loadImage -----
 
 	createPlane();					// ----- createPlane -----
 }
@@ -91,6 +91,7 @@ void setShaderUniformLocations() {
 
 	// set other uniforms
 	locHeightMap = glGetUniformLocation(shaderIds[0], "heightMap");
+	locNormalMap = glGetUniformLocation(shaderIds[0], "normalMap");
 	locTerrainScale = glGetUniformLocation(shaderIds[0], "terrainScale");
 	locKa = glGetUniformLocation(shaderIds[0], "Ka");
 	locKd = glGetUniformLocation(shaderIds[0], "Kd");
@@ -117,10 +118,14 @@ void initDevIl() {
 	glGetError();				// ignore error
 }
 
-void loadImage() {
+void loadImages() {
 	glActiveTexture(GL_TEXTURE0);
 	ILstring imageFilename = "./assets/heightmap.png";
-	textureHandle = ilutGLLoadImage(imageFilename);
+	textureHandles[0] = ilutGLLoadImage(imageFilename);
+
+	glActiveTexture(GL_TEXTURE1);
+	ILstring imageFilename2 = "./assets/normal.png";
+	textureHandles[1] = ilutGLLoadImage(imageFilename2);
 
 	// Output last image loaded properties
 	// Available properties list is at: http://www-f9.ijs.si/~matevz/docs/DevIL/il/f00027.htm
@@ -236,8 +241,12 @@ void drawPlane() {
 
 	// activate texture
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, textureHandle);
+	glBindTexture(GL_TEXTURE_2D, textureHandles[0]);
 	glUniform1i(locHeightMap, 0);
+
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, textureHandles[1]);
+	glUniform1i(locNormalMap, 1);
 	
 	// activate buffer
 	glBindVertexArray(bufferIds[0]);
