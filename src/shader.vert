@@ -12,10 +12,7 @@ layout(location=1) in vec2	in_Texture;
 out vec3					ex_objPosition;
 smooth out vec2				ex_TexCoords;
 
-void main(void) {
-	//TODO: fix normals
-
-	vec4 texColor = texture2D(heightMap, in_Texture);
+void main(void) {vec4 texColor = texture2D(heightMap, in_Texture);
 	// TODO: repalce texColor.r with texColor.a for alpha?
 	vec4 position = vec4(in_Position.x, texColor.r * terrainScale, in_Position.z, 1.0f);
 
