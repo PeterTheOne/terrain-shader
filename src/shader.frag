@@ -1,8 +1,13 @@
 #version 330
 
+// heightmap
 uniform sampler2D			heightMap;
 uniform sampler2D			heightMap2;
 uniform float				interpolationScale;
+
+// textures
+uniform sampler2D			grasTexture;
+uniform sampler2D			stoneTexture;
 uniform float				terrainScale;
 
 // light
@@ -20,10 +25,10 @@ out vec4					out_Color;
 const float					normalContrastScale = 0.3f;
 
 // Obtain fragment elevation
-float getElevation(vec2 texcoord) {
+float getElevation(vec2 texcoord, float scale) {
 	vec3 color1 = texture2D(heightMap, texcoord).rgb;
 	vec3 color2 = texture2D(heightMap2, texcoord).rgb;
-    return (mix(color1, color2, interpolationScale).r * normalContrastScale);
+    return (mix(color1, color2, interpolationScale).r * scale);
 }
 
 vec3 getNormal(vec2 texcoord, float sOffset, float tOffset) {
@@ -37,15 +42,15 @@ vec3 getNormal(vec2 texcoord, float sOffset, float tOffset) {
 	vec2 texcoordNW =	vec2(texcoord.s - sOffset,	texcoord.t + tOffset);
 	
 	vec3 v[9];
-	v[0] = vec3(0.0f,		getElevation(texcoord),		0.0f);
-	v[1] = vec3(0.0f,		getElevation(texcoordN),	+tOffset)	- v[0];
-	v[2] = vec3(+sOffset,	getElevation(texcoordNE),	+tOffset)	- v[0];
-	v[3] = vec3(+sOffset,	getElevation(texcoordE),	0.0f)		- v[0];
-	v[4] = vec3(+sOffset,	getElevation(texcoordSE),	-tOffset)	- v[0];
-	v[5] = vec3(0.0f,		getElevation(texcoordS),	-tOffset)	- v[0];
-	v[6] = vec3(-tOffset,	getElevation(texcoordSW),	-tOffset)	- v[0];
-	v[7] = vec3(-sOffset,	getElevation(texcoordW),	0.0f)		- v[0];
-	v[8] = vec3(-sOffset,	getElevation(texcoordNW),	+tOffset)	- v[0];
+	v[0] = vec3(0.0f,		getElevation(texcoord, normalContrastScale),	0.0f);
+	v[1] = vec3(0.0f,		getElevation(texcoordN, normalContrastScale),	+tOffset)	- v[0];
+	v[2] = vec3(+sOffset,	getElevation(texcoordNE, normalContrastScale),	+tOffset)	- v[0];
+	v[3] = vec3(+sOffset,	getElevation(texcoordE, normalContrastScale),	0.0f)		- v[0];
+	v[4] = vec3(+sOffset,	getElevation(texcoordSE, normalContrastScale),	-tOffset)	- v[0];
+	v[5] = vec3(0.0f,		getElevation(texcoordS, normalContrastScale),	-tOffset)	- v[0];
+	v[6] = vec3(-tOffset,	getElevation(texcoordSW, normalContrastScale),	-tOffset)	- v[0];
+	v[7] = vec3(-sOffset,	getElevation(texcoordW, normalContrastScale),	0.0f)		- v[0];
+	v[8] = vec3(-sOffset,	getElevation(texcoordNW, normalContrastScale),	+tOffset)	- v[0];
 	
 	vec3 n0 = normalize(cross(v[1], v[2]));
 	vec3 n1 = normalize(cross(v[2], v[3]));
@@ -71,6 +76,20 @@ void main(void) {
 	float diffuseLight = max(dot(L, N), 0);
 	vec3 diffuse = Kd * lightColor * diffuseLight;
 
-	out_Color.rgb = vec3(0.0f);
-	out_Color.rgb = ambient + diffuse;
+	// Height Texture Blending
+	float textureScale = 10;
+	vec3 grasTexture = texture2D(grasTexture, mod(ex_TexCoords * textureScale, 1)).rgb;
+	vec3 stoneTexture = texture2D(stoneTexture, mod(ex_TexCoords * textureScale, 1)).rgb;
+
+	float height = getElevation(ex_TexCoords, 1);
+
+	vec3 blendedTexture;
+	if (height > 0.6) {
+		blendedTexture = mix(grasTexture, stoneTexture, (height - 0.6) / 4 * 10);
+	} else {
+		blendedTexture = grasTexture;
+	}
+
+	// Out
+	out_Color.rgb = (ambient + diffuse) * blendedTexture;
 }

@@ -15,8 +15,6 @@ out vec3					ex_objPosition;
 smooth out vec2				ex_TexCoords;
 
 void main(void) {
-	//TODO: fix normals
-	
 	vec4 texColor1 = texture2D(heightMap, in_Texture);
 	vec4 texColor2 = texture2D(heightMap2, in_Texture);
 	vec4 texColor = mix(texColor1, texColor2, interpolationScale);
