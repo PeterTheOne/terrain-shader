@@ -29,7 +29,7 @@ void setOpenGLSettings();
 void initShader();
 void setShaderUniformLocations();
 void initDevIl();
-void loadImage();
+void loadImages();
 
 // ----- Create, Draw and Destroy Functions -----
 
@@ -66,7 +66,11 @@ GLuint
 	bufferIds[3] = { 0 }, 
 	shaderIds[3] = { 0 }, 
 	textureHandle, 
+	textureHandleGras, 
+	textureHandleStone, 
 	locHeightMap, 
+	locGrasTexture, 
+	locStoneTexture, 
 	locTerrainScale, 
 	locKa, 
 	locKd, 

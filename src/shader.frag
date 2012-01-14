@@ -1,6 +1,9 @@
 #version 330
 
 uniform sampler2D			heightMap;
+uniform sampler2D			grasTexture;
+uniform sampler2D			stoneTexture;
+uniform float				terrainScale;
 
 // light
 uniform	vec3				Ka;
@@ -30,5 +33,19 @@ void main(void) {
 	float diffuseLight = max(dot(L, N), 0);
 	vec3 diffuse = Kd * lightColor * diffuseLight;
 
-	out_Color.rgb = (ambient + diffuse) * texture2D(heightMap, ex_TexCoords).rgb;
+	// Height Texture Blending
+	float textureScale = 10;
+	vec3 grasTexture = texture2D(grasTexture, mod(ex_TexCoords * textureScale, 1)).rgb;
+	vec3 stoneTexture = texture2D(stoneTexture, mod(ex_TexCoords * textureScale, 1)).rgb;
+
+	float height = texture2D(heightMap, ex_TexCoords).r;
+
+	vec3 blendedTexture;
+	if (height > 0.6) {
+		blendedTexture = mix(grasTexture, stoneTexture, (height - 0.6) / 4 * 10);
+	} else {
+		blendedTexture = grasTexture;
+	}
+
+	out_Color.rgb = (ambient + diffuse) * blendedTexture;
 }
