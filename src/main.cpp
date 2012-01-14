@@ -92,6 +92,8 @@ void setShaderUniformLocations() {
 	// set other uniforms
 	locHeightMap = glGetUniformLocation(shaderIds[0], "heightMap");
 	locNormalMap = glGetUniformLocation(shaderIds[0], "normalMap");
+	locGrasTexture = glGetUniformLocation(shaderIds[0], "grasTexture");
+	locStoneTexture = glGetUniformLocation(shaderIds[0], "stoneTexture");
 	locTerrainScale = glGetUniformLocation(shaderIds[0], "terrainScale");
 	locKa = glGetUniformLocation(shaderIds[0], "Ka");
 	locKd = glGetUniformLocation(shaderIds[0], "Kd");
@@ -126,6 +128,14 @@ void loadImages() {
 	glActiveTexture(GL_TEXTURE1);
 	ILstring imageFilename2 = "./assets/normal.png";
 	textureHandles[1] = ilutGLLoadImage(imageFilename2);
+
+	glActiveTexture(GL_TEXTURE2);
+	ILstring imageFilename3 = "./assets/gras.jpg";
+	textureHandles[2] = ilutGLLoadImage(imageFilename3);
+
+	glActiveTexture(GL_TEXTURE3);
+	ILstring imageFilename4 = "./assets/rock.jpg";
+	textureHandles[3] = ilutGLLoadImage(imageFilename4);
 
 	// Output last image loaded properties
 	// Available properties list is at: http://www-f9.ijs.si/~matevz/docs/DevIL/il/f00027.htm
@@ -247,6 +257,14 @@ void drawPlane() {
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, textureHandles[1]);
 	glUniform1i(locNormalMap, 1);
+
+	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_2D, textureHandles[2]);
+	glUniform1i(locGrasTexture, 2);
+
+	glActiveTexture(GL_TEXTURE3);
+	glBindTexture(GL_TEXTURE_2D, textureHandles[3]);
+	glUniform1i(locStoneTexture, 3);
 	
 	// activate buffer
 	glBindVertexArray(bufferIds[0]);
