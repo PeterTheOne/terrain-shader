@@ -76,10 +76,7 @@ void initShader() {
 
 	glLinkProgram(shaderIds[0]);
 	validateProgram(shaderIds[0]);
-
-	// ignore link error
-	glGetError();
-	//exitOnGLError("ERROR: Could not link the shader program");
+	exitOnGLError("ERROR: Could not link the shader program");
 }
 
 void setShaderUniformLocations() {
