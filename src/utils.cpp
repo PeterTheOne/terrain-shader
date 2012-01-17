@@ -39,7 +39,7 @@ void validateProgram(GLuint program) {
 	memset(buffer, 0, BUFFER_SIZE);
 	GLsizei length = 0;
 
-	glGetShaderInfoLog(program, BUFFER_SIZE, &length, buffer);
+	glGetProgramInfoLog(program, BUFFER_SIZE, &length, buffer);
 	if (length > 0) {
 		std::cerr << "Program " << program << "link error: " << buffer << std::endl;
 	}
